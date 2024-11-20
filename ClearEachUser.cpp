@@ -16,18 +16,25 @@ std::vector <std::string> keepUsers = {"colto", "clane", "sday2", "bwhittenbarge
 std::vector <std::string> deleteQueue = {}; 
 
 std::string defaultUserPath = "C:/Users/"; 
+std::filesystem::space_info info;
+double startingSpace; 
 
 int numUsersKept = 0; 
 int numUsersDeleted = 0; 
 int noAppData = 0; 
 
-void progressBar(const int initialTotal) { //adapted from https://stackoverflow.com/questions/14539867/how-to-display-a-progress-indicator-in-pure-c-c-cout-printf
+double progressBar(const int initialTotal) { //adapted from https://stackoverflow.com/questions/14539867/how-to-display-a-progress-indicator-in-pure-c-c-cout-printf
     int deletedCount = 0;
     int cursorLocation = 0;
+    double totalTime; 
+    std::chrono::high_resolution_clock::time_point startTime = std::chrono::high_resolution_clock::now();
     while (deleteQueue.size() > 0 || deletedCount < initialTotal) {
+        std::chrono::duration<double> elapsed = std::chrono::high_resolution_clock::now() - startTime;
+        totalTime = elapsed.count(); 
         deletedCount = initialTotal - deleteQueue.size();
         float progress = float(deletedCount) / initialTotal;
         int barWidth = 70;
+        std::cout << "(" << totalTime/60 << ":" << int(totalTime) % 60 << ") "; 
         std::cout << deletedCount << " out of " << initialTotal << " deleted. ";
         std::cout << "[";
         int pos = barWidth * progress;
@@ -39,9 +46,10 @@ void progressBar(const int initialTotal) { //adapted from https://stackoverflow.
         std::cout << "] " << int(progress * 100.0) << " %\r";
         std::cout.flush();
 
-        std::this_thread::sleep_for(std::chrono::milliseconds(1500));
+        std::this_thread::sleep_for(std::chrono::milliseconds(1000));
     }
     std::cout << std::endl;
+    return totalTime; 
 }
 
 // Function to delete a folder in a separate thread
@@ -96,6 +104,9 @@ int mainLoop(){
     }
 
     try {
+        info = std::filesystem::space(directoryPath);
+        startingSpace = info.available/1000000.0; //beginning available space before beginning the deletion (in MBs)
+        std::cout << info.available << std::endl; // testing info
         for (auto& entry : fs::directory_iterator(directoryPath)) {
             fs::path p = entry.path(); 
             std::string userName = p.filename().string();
@@ -122,5 +133,9 @@ int main() {
     std::cout << "Number of Users without an AppData folder: " << noAppData << std::endl; 
     std::cout << "Deleting the rest of the Users' AppData folders. Keep this window open until that process completes. (some access errors may be thrown; these are normal and can be ignored)" << std::endl; 
     std::cout << std::endl; 
-    progressBar(deleteQueue.size()); 
+    double timeElapsed = progressBar(deleteQueue.size()); 
+    std::cout << "Freed up " << info.available/1000000.0 - startingSpace << "MBs " << "in " <<  timeElapsed/60 << ":" << int(timeElapsed) % 60 << std::endl;
+    std::cout << "You may close the window or wait for it to close automatically" << std::endl; 
+    std::this_thread::sleep_for(std::chrono::milliseconds(15000));
+    return 0; 
 }
