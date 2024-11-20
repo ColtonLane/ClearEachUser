@@ -12,7 +12,7 @@
 namespace fs = std::filesystem;
 
 // "keepUsers" are the directories that are skipped over
-std::vector <std::string> keepUsers = {"colto", "clane", "sday2", "bwhittenbarger", "Administrator", "templocal", "Default", "Public", "Default User", "All Users", "astambaugh", "romay", "aboggs3", "jwhitt2", "jstrum"}; 
+std::vector <std::string> keepUsers = {"colto", "clane", "sday2", "bwhittenbarger", "Administrator", "templocal", "Default", "Public", "Default User", "All Users", "astambaugh", "romay", "aboggs3", "jwhitt2", "jsturm"}; 
 std::vector <std::string> deleteQueue = {}; 
 
 std::string defaultUserPath = "C:/Users/"; 
