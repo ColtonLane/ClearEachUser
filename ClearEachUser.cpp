@@ -104,7 +104,7 @@ int mainLoop(){
     }
 
     try {
-        info = std::filesystem::space(directoryPath);
+        info = std::filesystem::space("/");
         startingSpace = info.available/1000000.0; //beginning available space before beginning the deletion (in MBs)
         std::cout << info.available << std::endl; // testing info
         for (auto& entry : fs::directory_iterator(directoryPath)) {
