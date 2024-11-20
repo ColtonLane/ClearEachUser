@@ -103,9 +103,9 @@ int mainLoop(){
         directoryPath = defaultUserPath; 
     }
 
-    info = fs::space(directoryPath);
-    startingSpace = info.available/1000000.0; //beginning available space before beginning the deletion (in MBs)
-    std::cout << info.available << std::endl; // testing info
+    // info = fs::space(directoryPath);
+    // startingSpace = info.available/1000000.0; //beginning available space before beginning the deletion (in MBs)
+    // std::cout << info.available << std::endl; // testing info
 
     try {
         for (auto& entry : fs::directory_iterator(directoryPath)) {
