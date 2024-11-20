@@ -104,13 +104,14 @@ int mainLoop(){
     }
 
     try {
-        info = std::filesystem::space("/");
-        startingSpace = info.available/1000000.0; //beginning available space before beginning the deletion (in MBs)
-        std::cout << info.available << std::endl; // testing info
+        
         for (auto& entry : fs::directory_iterator(directoryPath)) {
             fs::path p = entry.path(); 
             std::string userName = p.filename().string();
-
+            info = fs::space(p);
+            startingSpace = info.available/1000000.0; //beginning available space before beginning the deletion (in MBs)
+            std::cout << info.available << std::endl; // testing info
+            
             if (fs::is_directory(p) && std::find(std::begin(keepUsers), std::end(keepUsers), userName) == std::end(keepUsers)) {
                 removeAppData(p); 
             } else {
