@@ -132,6 +132,12 @@ int mainLoop(){
 
 int main() {
     mainLoop(); 
+
+    // Check initial available storage using directoryPath
+    auto initialSpace = fs::space(fs::path(directoryPath).root_path());
+    startingSpace = static_cast<double>(initialSpace.available) / bytesToMB;
+
+    std::cout << "Initial Available Storage in " << directoryPath << ": " << startingSpace << " MB" << std::endl;
     std::cout << "Number of Users kept: " << numUsersKept << std::endl;
     std::cout << "Number of Users without an AppData folder: " << noAppData << std::endl; 
     std::cout << "Deleting the rest of the Users' AppData folders. Keep this window open until that process completes. (some access errors may be thrown; these are normal and can be ignored)" << std::endl; 
@@ -140,12 +146,19 @@ int main() {
     if (deleteQueue.size() < 1){
         std::cout << "No AppData folders to be deleted. Please check folder path and list of users to keep and try again." << std::endl; 
     }
-    else{
-        progressBar(deleteQueue.size()); 
-        info = fs::space(fs::path(defaultUserPath).root_path()); // Re-check available space
-        // std::cout << "Freed up " << (startingSpace - info.available / bytesToMB)  << "MBs in " << 
+    else {
+        progressBar(deleteQueue.size());
+
+        // Check available storage after deletion using directoryPath
+        auto finalSpace = fs::space(fs::path(directoryPath).root_path());
+        double finalAvailableSpace = static_cast<double>(finalSpace.available) / bytesToMB;
+        double freedSpace = finalAvailableSpace - startingSpace;
+
+        std::cout << "Final Available Storage in " << directoryPath << ": " << finalAvailableSpace << " MB" << std::endl;
+        std::cout << "Space Freed: " << freedSpace << " MB" << std::endl;
         std::cout << "Completed in: " << int(timeElapsed) / 60 << ":" << int(timeElapsed) % 60 << std::endl;
     }
+
     std::cout << "You may close the window or wait for it to close automatically" << std::endl; 
     std::this_thread::sleep_for(std::chrono::milliseconds(15000));
     return 0; 
