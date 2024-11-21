@@ -109,9 +109,9 @@ int mainLoop(){
 
     fs::path dirPath = directoryPath; 
     try {
-        info = fs::space(dirPath.root_path());
-        startingSpace = info.available/bytesToMB; //beginning available space before beginning the deletion (in MBs)
-        std::cout << info.available << std::endl; // testing info
+        // info = fs::space(dirPath.root_path());
+        // startingSpace = info.available/bytesToMB; //beginning available space before beginning the deletion (in MBs)
+        // std::cout << info.available << std::endl; // testing info
         for (auto& entry : fs::directory_iterator(directoryPath)) {
             fs::path p = entry.path(); 
             std::string userName = p.filename().string();
@@ -137,14 +137,13 @@ int main() {
     std::cout << "Number of Users kept: " << numUsersKept << std::endl;
     std::cout << "Number of Users without an AppData folder: " << noAppData << std::endl; 
     std::cout << "Deleting the rest of the Users' AppData folders. Keep this window open until that process completes. (some access errors may be thrown; these are normal and can be ignored)" << std::endl; 
-    std::cout << deleteQueue.size(); 
     std::cout << std::endl; 
-    std::this_thread::sleep_for(std::chrono::milliseconds(15000));
+
     progressBar(deleteQueue.size()); 
     
-    // info = fs::space(fs::path(defaultUserPath).root_path()); // Re-check available space
-    // std::cout << "Freed up " << (startingSpace - info.available / bytesToMB)  << "MBs in " << int(timeElapsed) / 60 << ":" << int(timeElapsed) % 60 << std::endl;
-    // std::cout << "You may close the window or wait for it to close automatically" << std::endl; 
-    // std::this_thread::sleep_for(std::chrono::milliseconds(15000));
-    // return 0; 
+    info = fs::space(fs::path(defaultUserPath).root_path()); // Re-check available space
+    std::cout << "Freed up " << (startingSpace - info.available / bytesToMB)  << "MBs in " << int(timeElapsed) / 60 << ":" << int(timeElapsed) % 60 << std::endl;
+    std::cout << "You may close the window or wait for it to close automatically" << std::endl; 
+    std::this_thread::sleep_for(std::chrono::milliseconds(15000));
+    return 0; 
 }
