@@ -20,24 +20,24 @@ std::string directoryPath; //updates to the user's entered path in mainLoop
 
 double startingSpace; //keeps the amount of space the system starts with (kept in MBs by the processes that update it)
 std::filesystem::space_info info; //space_info variable to keep track of starting and completed deletion space
+double timeElapsed; 
 
 int bytesToMB = 1000000.0; 
 int numUsersKept = 0; 
 int numUsersDeleted = 0; 
 int noAppData = 0; 
 
-double progressBar(const int initialTotal) { //adapted from https://stackoverflow.com/questions/14539867/how-to-display-a-progress-indicator-in-pure-c-c-cout-printf
+void progressBar(const int initialTotal) { //adapted from https://stackoverflow.com/questions/14539867/how-to-display-a-progress-indicator-in-pure-c-c-cout-printf
     int deletedCount = 0;
     int cursorLocation = 0;
-    double totalTime; 
     std::chrono::high_resolution_clock::time_point startTime = std::chrono::high_resolution_clock::now();
     while (deleteQueue.size() > 0 || deletedCount < initialTotal) {
         std::chrono::duration<double> elapsed = std::chrono::high_resolution_clock::now() - startTime;
-        totalTime = elapsed.count(); 
+        timeElapsed = elapsed.count(); 
         deletedCount = initialTotal - deleteQueue.size();
         float progress = float(deletedCount) / initialTotal;
         int barWidth = 70;
-        std::cout << "(" << totalTime/60 << ":" << int(totalTime) % 60 << ") "; 
+        std::cout << "(" << timeElapsed/60 << ":" << int(timeElapsed) % 60 << ") "; 
         std::cout << deletedCount << " out of " << initialTotal << " deleted. ";
         std::cout << "[";
         int pos = barWidth * progress;
@@ -51,8 +51,7 @@ double progressBar(const int initialTotal) { //adapted from https://stackoverflo
 
         std::this_thread::sleep_for(std::chrono::milliseconds(1000));
     }
-    std::cout << std::endl;
-    return totalTime; 
+    std::cout << std::endl; 
 }
 
 // Function to delete a folder in a separate thread
@@ -140,7 +139,7 @@ int main() {
     std::cout << "Deleting the rest of the Users' AppData folders. Keep this window open until that process completes. (some access errors may be thrown; these are normal and can be ignored)" << std::endl; 
     std::cout << std::endl; 
 
-    double timeElapsed = progressBar(deleteQueue.size()); 
+    progressBar(deleteQueue.size()); 
     
     // Ensure all threads complete
     std::this_thread::sleep_for(std::chrono::seconds(5)); // Small buffer for detached threads
