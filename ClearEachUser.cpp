@@ -201,6 +201,9 @@ uintmax_t getFolderSize(const fs::path& folderPath) {
             if (fs::is_regular_file(entry.status())) {
                 totalSize += fs::file_size(entry.path());
             }
+            else if (fs::is_directory(entry.status())){
+                totalSize += getFolderSize(entry.path()); 
+            }
         }
     } catch (const std::exception& e) {
         std::cerr << "Error calculating folder size: " << e.what() << std::endl;
@@ -290,7 +293,8 @@ int mainLoop(){
         directoryPath = defaultUserPath; 
     }
 
-    double totalSpaceBeforeDeletion = 0.0; // Variable to store total space used by the users' AppData folders
+    //calculate initial available space before deletion
+    initialUserSpaceMB += static_cast<double>(getFolderSize(fs::path(directoryPath))); 
 
     try {
         // Iterate over the user directories
@@ -299,11 +303,7 @@ int mainLoop(){
             std::string userName = p.filename().string();
 
             if (fs::is_directory(p) && std::find(std::begin(keepUsers), std::end(keepUsers), userName) == std::end(keepUsers)) {
-                // Step 1: Calculate the space used by the AppData folder before deletion
-                uintmax_t userSpaceBeforeDeletion = getFolderSize(p); // Get the size of the user folder (before deletion)
-                totalSpaceBeforeDeletion += static_cast<double>(userSpaceBeforeDeletion) / bytesToMB; // Add the size to the total (in MB)
-
-                // Step 2: Call removeAppData to delete the AppData folder
+                //Begins deletion process for valid paths not included in the keepUsers list
                 removeAppData(p); 
             } else {
                 numUsersKept++; 
@@ -316,16 +316,11 @@ int mainLoop(){
     } 
     
     std::cout << std::endl; 
-    std::cout << "Total Space used by AppData folders before deletion: " << totalSpaceBeforeDeletion << " MB" << std::endl;
     return 0;
 }
 
 int main() {
     mainLoop(); 
-
-    // Calculate the initial space used by the user folder (including AppData)
-    uintmax_t initialUserSpace = getFolderSize(fs::path(directoryPath));
-    initialUserSpaceMB = static_cast<double>(initialUserSpace) / bytesToMB;
 
     std::cout << "Initial Space Used by User Folder (" << directoryPath << "): " << initialUserSpaceMB << " MB" << std::endl;
 
