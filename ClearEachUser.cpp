@@ -188,6 +188,9 @@ void progressBar(const int initialTotal) {
             std::lock_guard<std::mutex> lock(queueMutex);
             deletedCount = initialTotal - deleteQueue.size();
         }
+        std::chrono::duration<double> elapsed = std::chrono::high_resolution_clock::now() - startTime;
+        timeElapsed = elapsed.count();
+
         float progress = static_cast<float>(deletedCount) / initialTotal;
         int barWidth = 70;
 
@@ -209,23 +212,29 @@ void progressBar(const int initialTotal) {
     std::cout << std::endl;
 }
 
-// Function to delete a folder
+// Function to delete a folder using the RD command
 void deleteFolder(const fs::path& folderPath) {
     try {
         {
             std::lock_guard<std::mutex> lock(queueMutex);
             deleteQueue.push_back(folderPath.string());
         }
-        size_t removed = fs::remove_all(folderPath);
-        if (removed > 0) {
+
+        // Using the RD command
+        std::string command = "RD /S /Q \"" + folderPath.string() + "\"";
+        int result = system(command.c_str());
+        if (result == 0) {
             numUsersDeleted++;
+        } else {
+            std::cerr << "Failed to delete " << folderPath << " with error code: " << result << std::endl;
         }
+
         {
             std::lock_guard<std::mutex> lock(queueMutex);
             deleteQueue.erase(std::remove(deleteQueue.begin(), deleteQueue.end(), folderPath.string()), deleteQueue.end());
         }
     } catch (const std::exception& e) {
-        std::cerr << "Failed to delete " << folderPath << ": " << e.what() << std::endl;
+        std::cerr << "Exception while deleting " << folderPath << ": " << e.what() << std::endl;
     }
 }
 
