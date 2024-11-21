@@ -267,13 +267,13 @@ void removeAppData(fs::path& folderPath) {
     }
 }
 
-int mainLoop() {
+int mainLoop(){
     std::string input; 
     std::cout << "Enter the path of the Users folder to be cleaned and press Enter (or type 'default' to use 'C:/Users/' as the path):" << std::endl;
     std::cin >> directoryPath;
     std::cout << "Enter the name(s) [not the path] of User(s) folders to be kept. Type 'done' when you've entered every folder name to keep:" << std::endl; 
     
-    //populates keepUsers with inputed Users' folder names; breaks when 'done' is detected
+    // Populates keepUsers with inputted Users' folder names; breaks when 'done' is detected
     while(input != "done"){ 
         std::cin >> input; 
         if (input == "done"){
@@ -290,15 +290,22 @@ int mainLoop() {
         directoryPath = defaultUserPath; 
     }
 
+    double totalSpaceBeforeDeletion = 0.0; // Variable to store total space used by the users' AppData folders
+
     try {
+        // Iterate over the user directories
         for (auto& entry : fs::directory_iterator(directoryPath)) {
             fs::path p = entry.path(); 
             std::string userName = p.filename().string();
 
             if (fs::is_directory(p) && std::find(std::begin(keepUsers), std::end(keepUsers), userName) == std::end(keepUsers)) {
+                // Step 1: Calculate the space used by the AppData folder before deletion
+                uintmax_t userSpaceBeforeDeletion = getFolderSize(p); // Get the size of the user folder (before deletion)
+                totalSpaceBeforeDeletion += static_cast<double>(userSpaceBeforeDeletion) / bytesToMB; // Add the size to the total (in MB)
+
+                // Step 2: Call removeAppData to delete the AppData folder
                 removeAppData(p); 
             } else {
-                std::cout << "Kept: " << userName << std::endl; 
                 numUsersKept++; 
             }
         }
@@ -307,7 +314,9 @@ int mainLoop() {
     } catch (const std::exception& e) {
         std::cerr << "General exception: " << e.what() << std::endl;
     } 
+    
     std::cout << std::endl; 
+    std::cout << "Total Space used by AppData folders before deletion: " << totalSpaceBeforeDeletion << " MB" << std::endl;
     return 0;
 }
 
