@@ -17,7 +17,8 @@ std::vector <std::string> deleteQueue = {};
 
 std::string defaultUserPath = "C:/Users/"; 
 
-double freedSpace; 
+double startingSpace; 
+std::filesystem::space_info info; 
 
 int numUsersKept = 0; 
 int numUsersDeleted = 0; 
@@ -56,9 +57,6 @@ double progressBar(const int initialTotal) { //adapted from https://stackoverflo
 void deleteFolder(const fs::path& folderPath) {
     try {
         // Using the RD (Remove Directory) command to delete the folder
-        std::filesystem::space_info info = fs::space(folderPath);
-        double startingSpace = info.available/1000000.0; //beginning available space before beginning the deletion (in MBs)
-        std::cout << info.available << std::endl; // testing info
         std::string command = "RD /S /Q \"" + folderPath.string() + "\""; 
         deleteQueue.push_back(folderPath.string()); 
         int result = system(command.c_str()); // Execute the command
@@ -67,7 +65,6 @@ void deleteFolder(const fs::path& folderPath) {
         } else {
             //std::cerr << "Failed to delete " << folderPath << " with error code: " << result << std::endl;
         }
-        freedSpace += startingSpace - info.available/1000000.0; 
         deleteQueue.erase(std::remove(deleteQueue.begin(), deleteQueue.end(), folderPath.string()), deleteQueue.end());
     } catch (const std::exception& e) {
         //std::cerr << "Failed to delete " << folderPath << ": " << e.what() << std::endl;
@@ -107,6 +104,10 @@ int mainLoop(){
         directoryPath = defaultUserPath; 
     }
 
+    fs::path dirPath = directoryPath; 
+    info = fs::space(dirPath.root_path());
+    startingSpace = info.available/1000000.0; //beginning available space before beginning the deletion (in MBs)
+    std::cout << info.available << std::endl; // testing info
     try {
         for (auto& entry : fs::directory_iterator(directoryPath)) {
             fs::path p = entry.path(); 
@@ -135,7 +136,7 @@ int main() {
     std::cout << "Deleting the rest of the Users' AppData folders. Keep this window open until that process completes. (some access errors may be thrown; these are normal and can be ignored)" << std::endl; 
     std::cout << std::endl; 
     double timeElapsed = progressBar(deleteQueue.size()); 
-    std::cout << "Freed up " << freedSpace << "MBs " << "in " <<  int(timeElapsed)/60 << ":" << int(timeElapsed) % 60 << std::endl;
+    std::cout << "Freed up " << (startingSpace - info.available/1000000.0)  << "MBs " << "in " <<  int(timeElapsed)/60 << ":" << int(timeElapsed) % 60 << std::endl;
     std::cout << "You may close the window or wait for it to close automatically" << std::endl; 
     std::this_thread::sleep_for(std::chrono::milliseconds(15000));
     return 0; 
