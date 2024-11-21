@@ -61,7 +61,6 @@ void deleteFolder(const fs::path& folderPath) {
         std::string command = "RD /S /Q \"" + folderPath.string() + "\""; 
         deleteQueue.push_back(folderPath.string()); 
         int result = system(command.c_str()); // Execute the command
-        std::cout << "Deleting" << std::endl; 
         if (result == 0) {
             numUsersDeleted++; 
         } else {
