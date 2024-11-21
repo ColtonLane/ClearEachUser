@@ -137,8 +137,9 @@ int main() {
     std::cout << "Number of Users kept: " << numUsersKept << std::endl;
     std::cout << "Number of Users without an AppData folder: " << noAppData << std::endl; 
     std::cout << "Deleting the rest of the Users' AppData folders. Keep this window open until that process completes. (some access errors may be thrown; these are normal and can be ignored)" << std::endl; 
+    std::cout << deleteQueue.size(); 
     std::cout << std::endl; 
-
+    std::this_thread::sleep_for(std::chrono::milliseconds(15000));
     progressBar(deleteQueue.size()); 
     
     // info = fs::space(fs::path(defaultUserPath).root_path()); // Re-check available space
