@@ -183,8 +183,8 @@ std::vector <std::string> deleteQueue = {}; //vector of the users' AppData folde
 std::string defaultUserPath = "C:/Users/"; 
 std::string directoryPath; //updates to the user's entered path in mainLoop
 
-double startingSpace; //keeps the amount of space the system starts with (kept in MBs by the processes that update it)
-std::filesystem::space_info info; //space_info variable to keep track of starting and completed deletion space
+double initialUserSpaceMB; //keeps the amount of space the user folder starts with (in MB)
+double finalUserSpaceMB;  //final space used by user folder after deletion
 double timeElapsed; 
 
 int bytesToMB = 1000000.0; 
@@ -314,16 +314,12 @@ int mainLoop() {
 int main() {
     mainLoop(); 
 
-    // Check initial available storage using directoryPath
-    auto initialSpace = fs::space(fs::path(directoryPath).root_path());
-    startingSpace = static_cast<double>(initialSpace.available) / bytesToMB;
-
     // Calculate the initial space used by the user folder (including AppData)
     uintmax_t initialUserSpace = getFolderSize(fs::path(directoryPath));
-    double initialSpaceMB = static_cast<double>(initialUserSpace) / bytesToMB;
-    std::cout << "Initial Space Used by User Folder (" << directoryPath << "): " << initialSpaceMB << " MB" << std::endl;
+    initialUserSpaceMB = static_cast<double>(initialUserSpace) / bytesToMB;
 
-    std::cout << "Initial Available Storage in " << directoryPath << ": " << startingSpace << " MB" << std::endl;
+    std::cout << "Initial Space Used by User Folder (" << directoryPath << "): " << initialUserSpaceMB << " MB" << std::endl;
+
     std::cout << "Number of Users kept: " << numUsersKept << std::endl;
     std::cout << "Number of Users without an AppData folder: " << noAppData << std::endl; 
     std::cout << "Deleting the rest of the Users' AppData folders. Keep this window open until that process completes. (some access errors may be thrown; these are normal and can be ignored)" << std::endl; 
@@ -335,21 +331,13 @@ int main() {
     else {
         progressBar(deleteQueue.size());
 
-        // Check available storage after deletion using directoryPath
-        auto finalSpace = fs::space(fs::path(directoryPath).root_path());
-        double finalAvailableSpace = static_cast<double>(finalSpace.available) / bytesToMB;
-        double freedSpace = startingSpace - finalAvailableSpace;
-
         // Calculate the final space used by the user folder (after deletion)
         uintmax_t finalUserSpace = getFolderSize(fs::path(directoryPath));
-        double finalSpaceMB = static_cast<double>(finalUserSpace) / bytesToMB;
-        double freedUserSpace = initialSpaceMB - finalSpaceMB;
+        finalUserSpaceMB = static_cast<double>(finalUserSpace) / bytesToMB;
+        double freedUserSpace = initialUserSpaceMB - finalUserSpaceMB;
 
-        std::cout << "Final Space Used by User Folder: " << finalSpaceMB << " MB" << std::endl;
+        std::cout << "Final Space Used by User Folder: " << finalUserSpaceMB << " MB" << std::endl;
         std::cout << "Space Freed from User Folder: " << freedUserSpace << " MB" << std::endl;
-        std::cout << "Final Available Storage in " << directoryPath << ": " << finalAvailableSpace << " MB" << std::endl;
-        std::cout << "Space Freed: " << freedSpace << " MB" << std::endl;
-        std::cout << "Completed in: " << int(timeElapsed) / 60 << ":" << int(timeElapsed) % 60 << std::endl;
     }
 
     std::cout << "You may close the window or wait for it to close automatically" << std::endl; 
