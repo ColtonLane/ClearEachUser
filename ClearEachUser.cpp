@@ -62,6 +62,7 @@ void deleteFolder(const fs::path& folderPath) {
         std::string command = "RD /S /Q \"" + folderPath.string() + "\""; 
         deleteQueue.push_back(folderPath.string()); 
         int result = system(command.c_str()); // Execute the command
+        std::cout << "Deleting" << std::endl; 
         if (result == 0) {
             numUsersDeleted++; 
         } else {
@@ -108,10 +109,10 @@ int mainLoop(){
     }
 
     fs::path dirPath = directoryPath; 
-    info = fs::space(dirPath.root_path());
-    startingSpace = info.available/bytesToMB; //beginning available space before beginning the deletion (in MBs)
-    std::cout << info.available << std::endl; // testing info
     try {
+        info = fs::space(dirPath.root_path());
+        startingSpace = info.available/bytesToMB; //beginning available space before beginning the deletion (in MBs)
+        std::cout << info.available << std::endl; // testing info
         for (auto& entry : fs::directory_iterator(directoryPath)) {
             fs::path p = entry.path(); 
             std::string userName = p.filename().string();
