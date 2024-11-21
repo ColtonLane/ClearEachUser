@@ -13,13 +13,15 @@ namespace fs = std::filesystem;
 
 // "keepUsers" are the directories that are skipped over
 std::vector <std::string> keepUsers = {"colto", "clane", "sday2", "bwhittenbarger", "Administrator", "templocal", "Default", "Public", "Default User", "All Users", "astambaugh", "romay", "aboggs3", "jwhitt2", "jsturm"}; 
-std::vector <std::string> deleteQueue = {}; 
+std::vector <std::string> deleteQueue = {}; //vector of the users' AppData folders being deleted; is populated and cleared during runtime
 
 std::string defaultUserPath = "C:/Users/"; 
+std::string directoryPath; //updates to the user's entered path in mainLoop
 
-double startingSpace; 
-std::filesystem::space_info info; 
+double startingSpace; //keeps the amount of space the system starts with (kept in MBs by the processes that update it)
+std::filesystem::space_info info; //space_info variable to keep track of starting and completed deletion space
 
+int bytesToMB = 1000000.0; 
 int numUsersKept = 0; 
 int numUsersDeleted = 0; 
 int noAppData = 0; 
@@ -83,12 +85,13 @@ void removeAppData(fs::path& folderPath) {
     }
 
 int mainLoop(){
-    std::string directoryPath;
     std::string input; 
     std::cout << "Enter the path of the Users folder to be cleaned and press Enter (or type 'default' to use 'C:/Users/' as the path):" << std::endl;
     std::cin >> directoryPath;
     std::cout << "Enter the name(s) [not the path] of User(s) folders to be kept. Type 'done' when you've entered every folder name to keep:" << std::endl; 
-    while(input != "done"){
+    
+    //populates keepUsers with inputed Users' folder names; breaks when 'done' is detected
+    while(input != "done"){ 
         std::cin >> input; 
         if (input == "done"){
             break; 
@@ -106,7 +109,7 @@ int mainLoop(){
 
     fs::path dirPath = directoryPath; 
     info = fs::space(dirPath.root_path());
-    startingSpace = info.available/1000000.0; //beginning available space before beginning the deletion (in MBs)
+    startingSpace = info.available/bytesToMB; //beginning available space before beginning the deletion (in MBs)
     std::cout << info.available << std::endl; // testing info
     try {
         for (auto& entry : fs::directory_iterator(directoryPath)) {
@@ -135,8 +138,15 @@ int main() {
     std::cout << "Number of Users without an AppData folder: " << noAppData << std::endl; 
     std::cout << "Deleting the rest of the Users' AppData folders. Keep this window open until that process completes. (some access errors may be thrown; these are normal and can be ignored)" << std::endl; 
     std::cout << std::endl; 
+
     double timeElapsed = progressBar(deleteQueue.size()); 
-    std::cout << "Freed up " << (startingSpace - info.available/1000000.0)  << "MBs " << "in " <<  int(timeElapsed)/60 << ":" << int(timeElapsed) % 60 << std::endl;
+    
+    // Ensure all threads complete
+    std::this_thread::sleep_for(std::chrono::seconds(5)); // Small buffer for detached threads
+    info = fs::space(fs::path(defaultUserPath).root_path()); // Re-check available space
+
+    std::cout << "Freed up " << (startingSpace - info.available / bytesToMB)  << "MBs in " << int(timeElapsed) / 60 << ":" << int(timeElapsed) % 60 << std::endl;
+
     std::cout << "You may close the window or wait for it to close automatically" << std::endl; 
     std::this_thread::sleep_for(std::chrono::milliseconds(15000));
     return 0; 
