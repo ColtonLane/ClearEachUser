@@ -152,7 +152,7 @@ int main() {
         // Check available storage after deletion using directoryPath
         auto finalSpace = fs::space(fs::path(directoryPath).root_path());
         double finalAvailableSpace = static_cast<double>(finalSpace.available) / bytesToMB;
-        double freedSpace = finalAvailableSpace - startingSpace;
+        double freedSpace = startingSpace - finalAvailableSpace;
 
         std::cout << "Final Available Storage in " << directoryPath << ": " << finalAvailableSpace << " MB" << std::endl;
         std::cout << "Space Freed: " << freedSpace << " MB" << std::endl;
