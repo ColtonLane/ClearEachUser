@@ -30,8 +30,8 @@ int noAppData = 0;
 
 //Adapted from https://stackoverflow.co/question/15495756/how-can-i-find-the-size-of-all-files-located-inside-a-folder
 //Function to calculate the size of a folder (including subfolders)
-void getFolderSize(const std::string& rootFolder, unsigned long long& totalSize) {
-    fs::path appDataPath = fs::path(rootFolder) / "AppData";
+void getFolderSize(const std::string& userPath, unsigned long long& totalSize) {
+    fs::path appDataPath = fs::path(userPath) / "AppData";
 
     // Check if AppData exists and is a directory
     if (!fs::exists(appDataPath) || !fs::is_directory(appDataPath)) {
@@ -150,17 +150,12 @@ int mainLoop() {
         directoryPath = defaultUserPath; 
     }
 
-    std::cout << "Calculating folder size for :" << directoryPath << std::endl; 
-    getFolderSize(directoryPath, initialUserSpaceMB); 
-    if (initialUserSpaceMB > 0){
-        std::cout << "Initial Space Used by Users' Folders (" << directoryPath << "): " << initialUserSpaceMB << " MB" << std::endl;
-    }
-
     try {
         // Iterate over the user directories
         for (auto& entry : fs::directory_iterator(directoryPath)) {
             fs::path p = entry.path(); 
             std::string userName = p.filename().string();
+            getFolderSize(p.string(), initialUserSpaceMB); 
 
             //Check if the folder exists and is a directory; if so, calls removeAppData to delete the AppData folder
             if (fs::is_directory(p) && std::find(std::begin(keepUsers), std::end(keepUsers), userName) == std::end(keepUsers)) {
@@ -191,7 +186,9 @@ int mainLoop() {
 
 int main() {
     mainLoop(); 
-    
+    if (initialUserSpaceMB > 0){
+        std::cout << "Initial Space Used by Users' Folders (" << directoryPath << "): " << initialUserSpaceMB << " MB" << std::endl;
+    }
     std::cout << "Number of Users kept: " << numUsersKept << std::endl;
     std::cout << "Number of Users without an AppData folder: " << noAppData << std::endl; 
     std::cout << "Deleting the rest of the Users' AppData folders. Keep this window open until that process completes. (some access errors may be thrown; these are normal and can be ignored)" << std::endl; 
