@@ -140,6 +140,7 @@ void removeAppData(fs::path& folderPath) {
     fs::path appDataPath = folderPath / "AppData";
     // Deletes AppData folder if one is found for that user; runs deleteFolder in new thread and detaches it for multi-threading
     if (fs::exists(appDataPath)) { 
+        getFolderSize(appDataPath); 
         std::thread deleteThread(deleteFolder, appDataPath);
         deleteThread.detach(); // Detach the thread so it runs independently
     }
@@ -181,7 +182,6 @@ int mainLoop() {
             //Check if the folder exists and is a directory; if so, calls removeAppData to delete the AppData folder
             if (fs::is_directory(p) && std::find(std::begin(keepUsers), std::end(keepUsers), userName) == std::end(keepUsers)) {
                 if (fs::exists(p) && fs::is_directory(p)) {
-                    getFolderSize(p); 
                     removeAppData(p); 
                 } 
                 else {
