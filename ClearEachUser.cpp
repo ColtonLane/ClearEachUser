@@ -147,7 +147,10 @@ int mainLoop() {
 
     std::cout << "Calculating folder size for :" << directoryPath << std::endl; 
     getFolderSize(directoryPath, initialUserSpaceMB); 
-
+    if (initialUserSpaceMB > 0){
+        std::cout << "Initial Space Used by Users' Folders (" << directoryPath << "): " << initialUserSpaceMB << " MB" << std::endl;
+    }
+    
     try {
         // Iterate over the user directories
         for (auto& entry : fs::directory_iterator(directoryPath)) {
@@ -183,9 +186,7 @@ int mainLoop() {
 
 int main() {
     mainLoop(); 
-    if (initialUserSpaceMB > 0){
-        std::cout << "Initial Space Used by Users' Folders (" << directoryPath << "): " << initialUserSpaceMB << " MB" << std::endl;
-    }
+    
     std::cout << "Number of Users kept: " << numUsersKept << std::endl;
     std::cout << "Number of Users without an AppData folder: " << noAppData << std::endl; 
     std::cout << "Deleting the rest of the Users' AppData folders. Keep this window open until that process completes. (some access errors may be thrown; these are normal and can be ignored)" << std::endl; 
