@@ -69,7 +69,7 @@ void progressBar(const int initialTotal) {
         int barWidth = 70;
 
         //The following code is printed to the bottom of the terminal and updated each second to provide a timer and constant progress bar
-        std::cout << "(" << int(timeElapsed)/60 << ":" << (int(timeElapsed) % 6) / 10 << (int(timeElapsed) % 60) / 10 << ") "; //This prints the time in the format "m:s"
+        std::cout << "(" << int(timeElapsed)/60 << ":" << (int(timeElapsed) % 60) / 10 << (int(timeElapsed) % 60) / 100 << ") "; //This prints the time in the format "m:s"
         std::cout << deletedCount << " out of " << initialTotal << " deleted. ";
         std::cout << "["; 
         int pos = barWidth * progress;
