@@ -42,7 +42,7 @@ uintmax_t getFolderSize(const fs::path& folderPath) {
         // Iterate over all the files in the directory and sum their sizes
         for (auto& entry : fs::recursive_directory_iterator(folderPath)) {
             // Skip non-regular files (e.g., symbolic links)
-            if (fs::is_regular_file(entry)) {
+            if (fs::is_regular_file(entry) && fs::exists(entry.path())) {
                 totalSize += fs::file_size(entry);
             }
         }
@@ -69,7 +69,7 @@ void progressBar(const int initialTotal) {
         int barWidth = 70;
 
         //The following code is printed to the bottom of the terminal and updated each second to provide a timer and constant progress bar
-        std::cout << "(" << int(timeElapsed)/60 << ":" << (int(timeElapsed) % 60) / 10 << (int(timeElapsed) % 60) / 100 << ") "; //This prints the time in the format "m:s"
+        std::cout << "(" << int(timeElapsed)/60 << ":" << (int(timeElapsed) % 60) / 10 << int(timeElapsed) % 60 << ") "; //This prints the time in the format "m:s"
         std::cout << deletedCount << " out of " << initialTotal << " deleted. ";
         std::cout << "["; 
         int pos = barWidth * progress;
