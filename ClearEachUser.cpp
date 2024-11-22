@@ -50,7 +50,7 @@ void getFolderSize(const std::string& userPath, unsigned long long& totalSize) {
             }
         }
     } catch (const fs::filesystem_error& e) {
-        std::cerr << "Error accessing AppData folder: " << e.what() << std::endl;
+        //std::cerr << "Error accessing AppData folder: " << e.what() << std::endl;
     }
 }
 
@@ -186,6 +186,7 @@ int mainLoop() {
 
 int main() {
     mainLoop(); 
+    initialUserSpaceMB = initialUserSpaceMB/bytesToMB; 
     if (initialUserSpaceMB > 0){
         std::cout << "Initial Space Used by Users' Folders (" << directoryPath << "): " << initialUserSpaceMB << " MB" << std::endl;
     }
