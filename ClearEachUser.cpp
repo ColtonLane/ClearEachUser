@@ -8,6 +8,7 @@
 #include <windows.h>
 #include <Shobjidl.h>
 #include <shellapi.h>
+#include <unordered_set>
 
 namespace fs = std::filesystem;
 
@@ -28,28 +29,43 @@ int numUsersDeleted = 0;
 int noAppData = 0; 
 
 //Adapted from https://stackoverflow.co/question/15495756/how-can-i-find-the-size-of-all-files-located-inside-a-folder
-// Function to calculate the size of a folder (including subfolders)
-void  getFolderSize(std::string rootFolder,unsigned long long & f_size)
-{
-   fs::path folderPath(rootFolder);                      
-   if (fs::exists(folderPath))
-   {
-        fs::directory_iterator end_itr;
-        for (fs::directory_iterator dirIte(rootFolder); dirIte != end_itr; ++dirIte )
-        {
-            fs::path filePath((dirIte->path(), folderPath));
-           try{
-                  if (!is_directory(dirIte->status()) )
-                  {
-                      f_size = f_size + file_size(filePath);                      
-                  }else
-                  {
-                      getFolderSize(filePath.string(),f_size);
-                  }
-              }catch(std::exception& e){  std::cout << e.what() << std::endl; }
-         }
-      }
+//Function to calculate the size of a folder (including subfolders)
+void getFolderSize(const std::string& rootFolder, unsigned long long& f_size) {
+    std::vector<fs::path> stack = {rootFolder};
+    std::unordered_set<std::string> visitedPaths;
+
+    while (!stack.empty()) {
+        fs::path currentPath = stack.back();
+        stack.pop_back();
+
+        if (!fs::exists(currentPath)) {
+            std::cerr << "Skipped non-existent path: " << currentPath << std::endl;
+            continue;
+        }
+
+        try {
+            for (const auto& entry : fs::directory_iterator(currentPath)) {
+                const fs::path& subPath = entry.path();
+
+                if (visitedPaths.find(subPath.string()) != visitedPaths.end()) {
+                    std::cerr << "Skipped already visited path: " << subPath << std::endl;
+                    continue;
+                }
+
+                visitedPaths.insert(subPath.string());
+
+                if (fs::is_directory(subPath)) {
+                    stack.push_back(subPath);
+                } else if (fs::is_regular_file(subPath)) {
+                    f_size += fs::file_size(subPath);
+                    std::cout << "File: " << subPath << ", Size: " << fs::file_size(subPath) << std::endl; // Debugging
+                }
+            }
+        } catch (const fs::filesystem_error& e) {
+            std::cerr << "Filesystem error: " << e.what() << " for path: " << currentPath << std::endl;
+        }
     }
+}
 
 //adapted from https://stackoverflow.com/questions/14539867/how-to-display-a-progress-indicator-in-pure-c-c-cout-printf
 //Displays progress bar based on the number of AppData folders deleted out of the total number detected; Displays a timer as well
@@ -104,7 +120,8 @@ void deleteFolder(const fs::path& folderPath) {
             //std::cerr << "Failed to delete " << folderPath << " with error code: " << result << std::endl; 
         }
         deleteQueue.erase(std::remove(deleteQueue.begin(), deleteQueue.end(), folderPath.string()), deleteQueue.end());
-    } catch (const std::exception& e) {
+    } 
+    catch (const std::exception& e) {
         //std::cerr << "Failed to delete " << folderPath << ": " << e.what() << std::endl;
     }
 }
