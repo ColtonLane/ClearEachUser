@@ -206,7 +206,6 @@ int main() {
             // Calculate the final space used by the user folder (after deletion)
             getFolderSize(directoryPath, finalUserSpaceMB);
             double freedUserSpace = initialUserSpaceMB - finalUserSpaceMB;
-            std::cout << "Final Space Used by User Folder: " << finalUserSpaceMB << " MB" << std::endl;
             std::cout << "Space Freed from User Folder: " << freedUserSpace << " MB" << std::endl;
         }
     }
