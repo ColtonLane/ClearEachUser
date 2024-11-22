@@ -35,45 +35,23 @@ int noAppData = 0;
 
 namespace fs = std::filesystem;
 
+//Adapted from https://stackoverflow.co/question/15495756/how-can-i-find-the-size-of-all-files-located-inside-a-folder
 // Function to calculate the size of a folder (including subfolders)
-uintmax_t getFolderSize(const fs::path& folderPath) {
-    uintmax_t totalSize = 0;
+long long int getFolderSize(std::string p) {
+    std::string cmd("du -sb "); 
+    cmd.append(p); 
+    cmd.append(" | cut -f1 2>&1"); 
 
-    // Make sure the directory exists
-    if (!fs::exists(folderPath) || !fs::is_directory(folderPath)) {
-        std::cerr << "Skipping invalid or inaccessible directory: " << folderPath.string() << std::endl;
-        return 0;
-    }
-
-    try {
-        // Iterate over all files and directories
-        auto iterator = fs::directory_iterator(folderPath, fs::directory_options::skip_permission_denied);
-        for (auto& entry : iterator) {
-            try {
-                // Skip symbolic links
-                if (fs::is_symlink(entry.path())) {
-                    continue;
-                }
-
-                // Skip non-regular files
-                if (fs::is_regular_file(entry)) {
-                    totalSize += fs::file_size(entry);
-                }
-                else if (fs::is_directory(entry)){
-                    totalSize += getFolderSize(entry.path()); 
-                }
-            } catch (const fs::filesystem_error& e) {
-                // Handle errors for individual entries and continue
-                std::cerr << "Error processing entry " << entry.path() << ": " << e.what() << std::endl;
-                continue;
-            }
+    FILE *stream = popen(cmd.c_str(), "r"); 
+    if (stream){
+        const int max_size = 256; 
+        char readbuf[max_size]; 
+        if (fgets(readbuf, max_size, stream) != NULL){
+            return atoll(readbuf); 
         }
-    } catch (const fs::filesystem_error& e) {
-        std::cerr << "Error iterating directory: " << e.what() << std::endl;
-        return 0; 
+        pclose(stream); 
     }
-
-    return totalSize;
+    return 0; 
 }
 
 
@@ -140,7 +118,6 @@ void removeAppData(fs::path& folderPath) {
     fs::path appDataPath = folderPath / "AppData";
     // Deletes AppData folder if one is found for that user; runs deleteFolder in new thread and detaches it for multi-threading
     if (fs::exists(appDataPath)) { 
-        getFolderSize(appDataPath); 
         std::thread deleteThread(deleteFolder, appDataPath);
         deleteThread.detach(); // Detach the thread so it runs independently
     }
@@ -172,6 +149,8 @@ int mainLoop() {
     if (directoryPath == "default") {
         directoryPath = defaultUserPath; 
     }
+
+    initialUserSpaceMB = getFolderSize(directoryPath); 
 
     try {
         // Iterate over the user directories
@@ -226,7 +205,7 @@ int main() {
         std::cout << "Deleted " << initialDelQueue << " AppData folders in " << int(timeElapsed)/60 << "m " << int(timeElapsed)%60 << "s" << std::endl; 
         if (initialUserSpaceMB > 0){
             // Calculate the final space used by the user folder (after deletion)
-            uintmax_t finalUserSpace = getFolderSize(fs::path(directoryPath));
+            uintmax_t finalUserSpace = getFolderSize(directoryPath);
             finalUserSpaceMB = static_cast<double>(finalUserSpace) / bytesToMB;
             double freedUserSpace = initialUserSpaceMB - finalUserSpaceMB;
             std::cout << "Final Space Used by User Folder: " << finalUserSpaceMB << " MB" << std::endl;
@@ -234,6 +213,7 @@ int main() {
         }
     }
 
+    std::cout << std::endl; 
     std::cout << "You may close the window or wait for it to close automatically" << std::endl; 
     std::this_thread::sleep_for(std::chrono::milliseconds(15000));
     return 0; 
