@@ -146,11 +146,11 @@ int mainLoop() {
     }
 
     std::cout << "Calculating folder size for :" << directoryPath << std::endl; 
-    getFolderSize(directoryPath, initialUserSpaceMB); 
+    //getFolderSize(directoryPath, initialUserSpaceMB); 
     if (initialUserSpaceMB > 0){
         std::cout << "Initial Space Used by Users' Folders (" << directoryPath << "): " << initialUserSpaceMB << " MB" << std::endl;
     }
-    
+
     try {
         // Iterate over the user directories
         for (auto& entry : fs::directory_iterator(directoryPath)) {
