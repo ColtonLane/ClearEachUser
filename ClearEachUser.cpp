@@ -47,7 +47,7 @@ uintmax_t getFolderSize(const fs::path& folderPath) {
 
     try {
         // Iterate over all files and directories
-        auto iterator = fs::recursive_directory_iterator(folderPath, fs::directory_options::skip_permission_denied);
+        auto iterator = fs::directory_iterator(folderPath, fs::directory_options::skip_permission_denied);
         for (auto& entry : iterator) {
             try {
                 // Skip symbolic links
@@ -58,6 +58,9 @@ uintmax_t getFolderSize(const fs::path& folderPath) {
                 // Skip non-regular files
                 if (fs::is_regular_file(entry)) {
                     totalSize += fs::file_size(entry);
+                }
+                else if (fs::is_directory(entry)){
+                    totalSize += getFolderSize(entry.path()); 
                 }
             } catch (const fs::filesystem_error& e) {
                 // Handle errors for individual entries and continue
