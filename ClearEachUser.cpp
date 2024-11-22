@@ -35,7 +35,7 @@ void getFolderSize(const std::string& userPath, unsigned long long& totalSize) {
 
     // Check if AppData exists and is a directory
     if (!fs::exists(appDataPath) || !fs::is_directory(appDataPath)) {
-        std::cerr << "AppData folder does not exist or is not accessible: " << appDataPath << std::endl;
+        // std::cerr << "AppData folder does not exist or is not accessible: " << appDataPath << std::endl;
         return;
     }
 
