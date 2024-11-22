@@ -18,8 +18,8 @@ std::vector <std::string> deleteQueue = {}; //vector of the users' AppData folde
 std::string defaultUserPath = "C:/Users/"; 
 std::string directoryPath; //updates to the user's entered path in mainLoop
 
-double initialUserSpaceMB; //keeps the amount of space the user folder starts with (in MB)
-double finalUserSpaceMB;  //final space used by user folder after deletion
+unsigned long long initialUserSpaceMB; //keeps the amount of space the user folder starts with (in MB)
+unsigned long long finalUserSpaceMB;  //final space used by user folder after deletion
 double timeElapsed; //keeps amount of time elapsed in seconds
 
 int bytesToMB = 1000000.0; //factor to convert initialUserSpaceMB and finalUserSpaceMB from bytes to MB
@@ -27,34 +27,29 @@ int numUsersKept = 0;
 int numUsersDeleted = 0; 
 int noAppData = 0; 
 
-#include <iostream>
-#include <filesystem>
-#include <vector>
-#include <string>
-#include <exception>
-
-namespace fs = std::filesystem;
-
 //Adapted from https://stackoverflow.co/question/15495756/how-can-i-find-the-size-of-all-files-located-inside-a-folder
 // Function to calculate the size of a folder (including subfolders)
-long long int getFolderSize(std::string p) {
-    std::string cmd("du -sb "); 
-    cmd.append(p); 
-    cmd.append(" | cut -f1 2>&1"); 
-
-    FILE *stream = popen(cmd.c_str(), "r"); 
-    if (stream){
-        const int max_size = 256; 
-        char readbuf[max_size]; 
-        if (fgets(readbuf, max_size, stream) != NULL){
-            return atoll(readbuf); 
-        }
-        pclose(stream); 
+void  getFolderSize(std::string rootFolder,unsigned long long & f_size)
+{
+   fs::path folderPath(rootFolder);                      
+   if (fs::exists(folderPath))
+   {
+        fs::directory_iterator end_itr;
+        for (fs::directory_iterator dirIte(rootFolder); dirIte != end_itr; ++dirIte )
+        {
+            fs::path filePath((dirIte->path(), folderPath));
+           try{
+                  if (!is_directory(dirIte->status()) )
+                  {
+                      f_size = f_size + file_size(filePath);                      
+                  }else
+                  {
+                      getFolderSize(filePath.string(),f_size);
+                  }
+              }catch(std::exception& e){  std::cout << e.what() << std::endl; }
+         }
+      }
     }
-    return 0; 
-}
-
-
 
 //adapted from https://stackoverflow.com/questions/14539867/how-to-display-a-progress-indicator-in-pure-c-c-cout-printf
 //Displays progress bar based on the number of AppData folders deleted out of the total number detected; Displays a timer as well
@@ -150,7 +145,7 @@ int mainLoop() {
         directoryPath = defaultUserPath; 
     }
 
-    initialUserSpaceMB = getFolderSize(directoryPath); 
+    getFolderSize(directoryPath, initialUserSpaceMB); 
 
     try {
         // Iterate over the user directories
@@ -205,8 +200,7 @@ int main() {
         std::cout << "Deleted " << initialDelQueue << " AppData folders in " << int(timeElapsed)/60 << "m " << int(timeElapsed)%60 << "s" << std::endl; 
         if (initialUserSpaceMB > 0){
             // Calculate the final space used by the user folder (after deletion)
-            uintmax_t finalUserSpace = getFolderSize(directoryPath);
-            finalUserSpaceMB = static_cast<double>(finalUserSpace) / bytesToMB;
+            getFolderSize(directoryPath, finalUserSpaceMB);
             double freedUserSpace = initialUserSpaceMB - finalUserSpaceMB;
             std::cout << "Final Space Used by User Folder: " << finalUserSpaceMB << " MB" << std::endl;
             std::cout << "Space Freed from User Folder: " << freedUserSpace << " MB" << std::endl;
