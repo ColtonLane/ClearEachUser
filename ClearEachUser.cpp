@@ -20,13 +20,14 @@ std::string directoryPath; //updates to the user's entered path in mainLoop
 
 double initialUserSpaceMB; //keeps the amount of space the user folder starts with (in MB)
 double finalUserSpaceMB;  //final space used by user folder after deletion
-double timeElapsed; 
+double timeElapsed; //keeps amount of time elapsed in seconds
 
-int bytesToMB = 1000000.0; 
+int bytesToMB = 1000000.0; //factor to convert initialUserSpaceMB and finalUserSpaceMB from bytes to MB
 int numUsersKept = 0; 
 int numUsersDeleted = 0; 
 int noAppData = 0; 
 
+// Adapted from https://brainly.com/question/33546974 
 // Function to calculate the size of a folder (including subfolders)
 uintmax_t getFolderSize(const fs::path& folderPath) {
     uintmax_t totalSize = 0;
@@ -39,7 +40,7 @@ uintmax_t getFolderSize(const fs::path& folderPath) {
 
     try {
         // Iterate over all the files in the directory and sum their sizes
-        for (auto& entry : fs::recursive_directory_iterator(folderPath)) {
+        for (auto& entry : fs::directory_iterator(folderPath)) {
             // Skip non-regular files (e.g., symbolic links)
             if (fs::is_regular_file(entry)) {
                 totalSize += fs::file_size(entry);
@@ -52,7 +53,9 @@ uintmax_t getFolderSize(const fs::path& folderPath) {
     return totalSize;
 }
 
-void progressBar(const int initialTotal) { //adapted from https://stackoverflow.com/questions/14539867/how-to-display-a-progress-indicator-in-pure-c-c-cout-printf
+//adapted from https://stackoverflow.com/questions/14539867/how-to-display-a-progress-indicator-in-pure-c-c-cout-printf
+//Displays progress bar based on the number of AppData folders deleted out of the total number detected; Displays a timer as well
+void progressBar(const int initialTotal) { 
     int deletedCount = 0;
     int cursorLocation = 0;
     std::chrono::high_resolution_clock::time_point startTime = std::chrono::high_resolution_clock::now();
@@ -60,6 +63,7 @@ void progressBar(const int initialTotal) { //adapted from https://stackoverflow.
         //elapsed is updated each second to provide an accurate time from the start of this while loop until it completes; timeElapsed is a double that keeps the elapsed time in seconds
         std::chrono::duration<double> elapsed = std::chrono::high_resolution_clock::now() - startTime;
         timeElapsed = elapsed.count(); 
+
         deletedCount = initialTotal - deleteQueue.size();
         float progress = float(deletedCount) / initialTotal;
         int barWidth = 70;
@@ -82,7 +86,7 @@ void progressBar(const int initialTotal) { //adapted from https://stackoverflow.
     std::cout << std::endl; 
 }
 
-// Function to delete a folder in a separate thread
+// Function to delete a folder in a separate thread, called from removeAppData
 void deleteFolder(const fs::path& folderPath) {
     try {
         // Using the RD (Remove Directory) command to delete the folder
@@ -92,7 +96,7 @@ void deleteFolder(const fs::path& folderPath) {
         if (result == 0) {
             numUsersDeleted++; 
         } else {
-            //std::cerr << "Failed to delete " << folderPath << " with error code: " << result << std::endl;
+            //std::cerr << "Failed to delete " << folderPath << " with error code: " << result << std::endl; 
         }
         deleteQueue.erase(std::remove(deleteQueue.begin(), deleteQueue.end(), folderPath.string()), deleteQueue.end());
     } catch (const std::exception& e) {
@@ -102,11 +106,13 @@ void deleteFolder(const fs::path& folderPath) {
 
 void removeAppData(fs::path& folderPath) {
     fs::path appDataPath = folderPath / "AppData";
-    if (fs::exists(appDataPath)) { // Deletes AppData folder if one is found for that user
-        // Launch deleteFolder in a new thread and detach it
+    // Deletes AppData folder if one is found for that user; runs deleteFolder in new thread and detaches it for multi-threading
+    if (fs::exists(appDataPath)) { 
         std::thread deleteThread(deleteFolder, appDataPath);
         deleteThread.detach(); // Detach the thread so it runs independently
-    } else { // AppData folder not found 
+    }
+    // AppData folder not found; adds it to running tally to show user 
+    else { 
         noAppData++; 
     }
 }
@@ -134,7 +140,7 @@ int mainLoop() {
         directoryPath = defaultUserPath; 
     }
 
-    initialUserSpaceMB = 0.0; // Variable to store total space used by the users' AppData folders
+    initialUserSpaceMB = getFolderSize(directoryPath)/bytesToMB; // Variable to store total space used by the users' AppData folders before starting deletion
 
     try {
         // Iterate over the user directories
@@ -142,24 +148,24 @@ int mainLoop() {
             fs::path p = entry.path(); 
             std::string userName = p.filename().string();
 
+            //Check if the folder exists and is a directory; if so, calls removeAppData to delete the AppData folder
             if (fs::is_directory(p) && std::find(std::begin(keepUsers), std::end(keepUsers), userName) == std::end(keepUsers)) {
-                // Step 1: Check if the folder exists and is a directory
                 if (fs::exists(p) && fs::is_directory(p)) {
-                    uintmax_t userSpaceBeforeDeletion = getFolderSize(p); // Get the size of the user folder (before deletion)
-                    initialUserSpaceMB += static_cast<double>(userSpaceBeforeDeletion) / bytesToMB; // Add the size to the total (in MB)
-
-                    // Step 2: Call removeAppData to delete the AppData folder
                     removeAppData(p); 
-                } else {
+                } 
+                else {
                     std::cerr << "Skipping invalid directory: " << p.string() << std::endl;
                 }
-            } else {
+            }
+             else {
                 numUsersKept++; 
             }
         }
-    } catch (const fs::filesystem_error& e) {
+    } 
+    catch (const fs::filesystem_error& e) {
         std::cerr << "Filesystem error: " << e.what() << std::endl;
-    } catch (const std::exception& e) {
+    } 
+    catch (const std::exception& e) {
         std::cerr << "General exception: " << e.what() << std::endl;
     } 
     
@@ -173,7 +179,6 @@ int main() {
     mainLoop(); 
 
     std::cout << "Initial Space Used by User Folder (" << directoryPath << "): " << initialUserSpaceMB << " MB" << std::endl;
-
     std::cout << "Number of Users kept: " << numUsersKept << std::endl;
     std::cout << "Number of Users without an AppData folder: " << noAppData << std::endl; 
     std::cout << "Deleting the rest of the Users' AppData folders. Keep this window open until that process completes. (some access errors may be thrown; these are normal and can be ignored)" << std::endl; 
