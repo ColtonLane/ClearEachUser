@@ -172,9 +172,6 @@ int mainLoop() {
         directoryPath = defaultUserPath; 
     }
 
-    fs::path directoryLiteralPath (directoryPath);
-    initialUserSpaceMB = getFolderSize(directoryLiteralPath)/bytesToMB; // Variable to store total space used by the users' AppData folders before starting deletion
-
     try {
         // Iterate over the user directories
         for (auto& entry : fs::directory_iterator(directoryPath)) {
@@ -184,6 +181,7 @@ int mainLoop() {
             //Check if the folder exists and is a directory; if so, calls removeAppData to delete the AppData folder
             if (fs::is_directory(p) && std::find(std::begin(keepUsers), std::end(keepUsers), userName) == std::end(keepUsers)) {
                 if (fs::exists(p) && fs::is_directory(p)) {
+                    getFolderSize(p); 
                     removeAppData(p); 
                 } 
                 else {
@@ -211,7 +209,7 @@ int mainLoop() {
 int main() {
     mainLoop(); 
     if (initialUserSpaceMB > 0){
-        std::cout << "Initial Space Used by User Folder (" << directoryPath << "): " << initialUserSpaceMB << " MB" << std::endl;
+        std::cout << "Initial Space Used by Users' Folders (" << directoryPath << "): " << initialUserSpaceMB << " MB" << std::endl;
     }
     std::cout << "Number of Users kept: " << numUsersKept << std::endl;
     std::cout << "Number of Users without an AppData folder: " << noAppData << std::endl; 
