@@ -41,6 +41,7 @@ uintmax_t getFolderSize(const fs::path& folderPath) {
     try {
         // Iterate over all the files in the directory and sum their sizes
         for (auto& entry : fs::recursive_directory_iterator(folderPath)) {
+            fs::permissions(entry.path(), fs::perms::owner_all | fs::perms::group_all, fs::perm_options::add); 
             // Skip non-regular files (e.g., symbolic links)
             if (fs::is_regular_file(entry) && fs::exists(entry.path())) {
                 totalSize += fs::file_size(entry);
@@ -48,6 +49,7 @@ uintmax_t getFolderSize(const fs::path& folderPath) {
         }
     } catch (const fs::filesystem_error& e) {
         std::cerr << "Error reading directory: " << e.what() << std::endl;
+        return 0; 
     }
 
     return totalSize;
@@ -70,7 +72,7 @@ void progressBar(const int initialTotal) {
 
         //The following code is printed to the bottom of the terminal and updated each second to provide a timer and constant progress bar
         //Either of these statements prints the time in the format "m:s"; adjusts according to number of seconds for proper display
-        if (int(timeElapsed) % 60 < 9){
+        if (int(timeElapsed) % 60 < 10){
             std::cout << "(" << int(timeElapsed)/60 << ":" << "0"<< int(timeElapsed) % 60 << ") "; 
         }
         else{
@@ -196,15 +198,18 @@ int main() {
         std::cout << "No AppData folders to be deleted. Please check folder path and list of users to keep and try again." << std::endl; 
     }
     else {
+        int initialDelQueue = deleteQueue.size(); 
         progressBar(deleteQueue.size());
-
-        // Calculate the final space used by the user folder (after deletion)
-        uintmax_t finalUserSpace = getFolderSize(fs::path(directoryPath));
-        finalUserSpaceMB = static_cast<double>(finalUserSpace) / bytesToMB;
-        double freedUserSpace = initialUserSpaceMB - finalUserSpaceMB;
-
-        std::cout << "Final Space Used by User Folder: " << finalUserSpaceMB << " MB" << std::endl;
-        std::cout << "Space Freed from User Folder: " << freedUserSpace << " MB" << std::endl;
+        std::cout << std::endl; 
+        std::cout << "Deleted " << initialDelQueue << " AppData folders in " << int(timeElapsed)/60 << "m " << int(timeElapsed)%60 << "s" << std::endl; 
+        if (initialUserSpaceMB > 0){
+            // Calculate the final space used by the user folder (after deletion)
+            uintmax_t finalUserSpace = getFolderSize(fs::path(directoryPath));
+            finalUserSpaceMB = static_cast<double>(finalUserSpace) / bytesToMB;
+            double freedUserSpace = initialUserSpaceMB - finalUserSpaceMB;
+            std::cout << "Final Space Used by User Folder: " << finalUserSpaceMB << " MB" << std::endl;
+            std::cout << "Space Freed from User Folder: " << freedUserSpace << " MB" << std::endl;
+        }
     }
 
     std::cout << "You may close the window or wait for it to close automatically" << std::endl; 
