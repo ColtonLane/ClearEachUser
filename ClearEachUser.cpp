@@ -155,11 +155,11 @@ int mainLoop() {
         for (auto& entry : fs::directory_iterator(directoryPath)) {
             fs::path p = entry.path(); 
             std::string userName = p.filename().string();
-            getFolderSize(p.string(), initialUserSpaceMB); 
 
             //Check if the folder exists and is a directory; if so, calls removeAppData to delete the AppData folder
             if (fs::is_directory(p) && std::find(std::begin(keepUsers), std::end(keepUsers), userName) == std::end(keepUsers)) {
                 if (fs::exists(p) && fs::is_directory(p)) {
+                    getFolderSize(p.string(), initialUserSpaceMB); 
                     removeAppData(p); 
                 } 
                 else {
