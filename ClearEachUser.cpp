@@ -38,7 +38,7 @@ namespace fs = std::filesystem;
 // Function to calculate the size of a folder (including subfolders)
 uintmax_t getFolderSize(const fs::path& folderPath) {
     uintmax_t totalSize = 0;
-    
+
     // Make sure the directory exists
     if (!fs::exists(folderPath) || !fs::is_directory(folderPath)) {
         std::cerr << "Skipping invalid or inaccessible directory: " << folderPath.string() << std::endl;
@@ -46,34 +46,33 @@ uintmax_t getFolderSize(const fs::path& folderPath) {
     }
 
     try {
-        for (auto& entry : fs::recursive_directory_iterator(folderPath, fs::directory_options::skip_permission_denied)) {
+        // Iterate over all files and directories
+        auto iterator = fs::recursive_directory_iterator(folderPath, fs::directory_options::skip_permission_denied);
+        for (auto& entry : iterator) {
             try {
-                if (fs::exists(entry.path())) {
-                    //Attempts to set permissions
-                    try {
-                        fs::permissions(entry.path(), fs::perms::owner_all | fs::perms::group_all, fs::perm_options::add);
-                    } catch (const fs::filesystem_error& e) {
-                        // Log permission errors and skip the file
-                        std::cerr << "Permission error: " << e.what() << std::endl;
-                        continue;
-                    }
+                // Skip symbolic links
+                if (fs::is_symlink(entry.path())) {
+                    continue;
+                }
 
-                    // Skip non-regular files (e.g., symbolic links)
-                    if (fs::is_regular_file(entry)) {
-                        totalSize += fs::file_size(entry);
-                    }
+                // Skip non-regular files
+                if (fs::is_regular_file(entry)) {
+                    totalSize += fs::file_size(entry);
                 }
             } catch (const fs::filesystem_error& e) {
-                std::cerr << "Error processing entry: " << e.what() << std::endl;
+                // Handle errors for individual entries and continue
+                std::cerr << "Error processing entry " << entry.path() << ": " << e.what() << std::endl;
                 continue;
             }
         }
     } catch (const fs::filesystem_error& e) {
-        std::cerr << "Error reading directory: " << e.what() << std::endl;
+        std::cerr << "Error iterating directory: " << e.what() << std::endl;
+        return 0; 
     }
 
     return totalSize;
 }
+
 
 
 //adapted from https://stackoverflow.com/questions/14539867/how-to-display-a-progress-indicator-in-pure-c-c-cout-printf
