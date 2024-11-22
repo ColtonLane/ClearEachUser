@@ -27,7 +27,14 @@ int numUsersKept = 0;
 int numUsersDeleted = 0; 
 int noAppData = 0; 
 
-// Adapted from https://brainly.com/question/33546974 
+#include <iostream>
+#include <filesystem>
+#include <vector>
+#include <string>
+#include <exception>
+
+namespace fs = std::filesystem;
+
 // Function to calculate the size of a folder (including subfolders)
 uintmax_t getFolderSize(const fs::path& folderPath) {
     uintmax_t totalSize = 0;
@@ -39,24 +46,35 @@ uintmax_t getFolderSize(const fs::path& folderPath) {
     }
 
     try {
-        // Iterate over all the files in the directory and sum their sizes
-        for (auto& entry : fs::recursive_directory_iterator(folderPath)) {
-            if(fs::exists(entry.path())){
-                fs::permissions(entry.path(), fs::perms::owner_all | fs::perms::group_all, fs::perm_options::add); 
-            }
-            
-            // Skip non-regular files (e.g., symbolic links)
-            if (fs::is_regular_file(entry)) {
-                totalSize += fs::file_size(entry);
+        for (auto& entry : fs::recursive_directory_iterator(folderPath, fs::directory_options::skip_permission_denied)) {
+            try {
+                if (fs::exists(entry.path())) {
+                    //Attempts to set permissions
+                    try {
+                        fs::permissions(entry.path(), fs::perms::owner_all | fs::perms::group_all, fs::perm_options::add);
+                    } catch (const fs::filesystem_error& e) {
+                        // Log permission errors and skip the file
+                        std::cerr << "Permission error: " << e.what() << std::endl;
+                        continue;
+                    }
+
+                    // Skip non-regular files (e.g., symbolic links)
+                    if (fs::is_regular_file(entry)) {
+                        totalSize += fs::file_size(entry);
+                    }
+                }
+            } catch (const fs::filesystem_error& e) {
+                std::cerr << "Error processing entry: " << e.what() << std::endl;
+                continue;
             }
         }
     } catch (const fs::filesystem_error& e) {
         std::cerr << "Error reading directory: " << e.what() << std::endl;
-        return 0; 
     }
 
     return totalSize;
 }
+
 
 //adapted from https://stackoverflow.com/questions/14539867/how-to-display-a-progress-indicator-in-pure-c-c-cout-printf
 //Displays progress bar based on the number of AppData folders deleted out of the total number detected; Displays a timer as well
@@ -184,7 +202,6 @@ int mainLoop() {
     } 
     
     std::cout << std::endl; 
-    std::cout << "Total Space used by AppData folders before deletion: " << initialUserSpaceMB << " MB" << std::endl;
     return 0;
 }
 
