@@ -41,9 +41,12 @@ uintmax_t getFolderSize(const fs::path& folderPath) {
     try {
         // Iterate over all the files in the directory and sum their sizes
         for (auto& entry : fs::recursive_directory_iterator(folderPath)) {
-            fs::permissions(entry.path(), fs::perms::owner_all | fs::perms::group_all, fs::perm_options::add); 
+            if(fs::exists(entry.path())){
+                fs::permissions(entry.path(), fs::perms::owner_all | fs::perms::group_all, fs::perm_options::add); 
+            }
+            
             // Skip non-regular files (e.g., symbolic links)
-            if (fs::is_regular_file(entry) && fs::exists(entry.path())) {
+            if (fs::is_regular_file(entry)) {
                 totalSize += fs::file_size(entry);
             }
         }
@@ -168,6 +171,7 @@ int mainLoop() {
                 }
             }
              else {
+                std::cout << "Kept: " << entry << std::endl; 
                 numUsersKept++; 
             }
         }
@@ -187,8 +191,9 @@ int mainLoop() {
 
 int main() {
     mainLoop(); 
-
-    std::cout << "Initial Space Used by User Folder (" << directoryPath << "): " << initialUserSpaceMB << " MB" << std::endl;
+    if (initialUserSpaceMB > 0){
+        std::cout << "Initial Space Used by User Folder (" << directoryPath << "): " << initialUserSpaceMB << " MB" << std::endl;
+    }
     std::cout << "Number of Users kept: " << numUsersKept << std::endl;
     std::cout << "Number of Users without an AppData folder: " << noAppData << std::endl; 
     std::cout << "Deleting the rest of the Users' AppData folders. Keep this window open until that process completes. (some access errors may be thrown; these are normal and can be ignored)" << std::endl; 
