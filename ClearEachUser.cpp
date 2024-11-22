@@ -145,6 +145,7 @@ int mainLoop() {
         directoryPath = defaultUserPath; 
     }
 
+    std::cout << "Calculating folder size for :" << directoryPath << std::endl; 
     getFolderSize(directoryPath, initialUserSpaceMB); 
 
     try {
