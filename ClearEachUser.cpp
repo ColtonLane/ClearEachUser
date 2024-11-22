@@ -30,42 +30,30 @@ int noAppData = 0;
 
 //Adapted from https://stackoverflow.co/question/15495756/how-can-i-find-the-size-of-all-files-located-inside-a-folder
 //Function to calculate the size of a folder (including subfolders)
-void getFolderSize(const std::string& rootFolder, unsigned long long& f_size) {
-    std::vector<fs::path> stack = {rootFolder};
-    std::unordered_set<std::string> visitedPaths;
+void getFolderSize(const std::string& rootFolder, unsigned long long& totalSize) {
+    fs::path appDataPath = fs::path(rootFolder) / "AppData";
 
-    while (!stack.empty()) {
-        fs::path currentPath = stack.back();
-        stack.pop_back();
+    // Check if AppData exists and is a directory
+    if (!fs::exists(appDataPath) || !fs::is_directory(appDataPath)) {
+        std::cerr << "AppData folder does not exist or is not accessible: " << appDataPath << std::endl;
+        return;
+    }
 
-        if (!fs::exists(currentPath)) {
-            std::cerr << "Skipped non-existent path: " << currentPath << std::endl;
-            continue;
-        }
+    // Traverse the AppData directory
+    try {
+        for (const auto& entry : fs::recursive_directory_iterator(appDataPath)) {
+            const auto& path = entry.path();
 
-        try {
-            for (const auto& entry : fs::directory_iterator(currentPath)) {
-                const fs::path& subPath = entry.path();
-
-                if (visitedPaths.find(subPath.string()) != visitedPaths.end()) {
-                    std::cerr << "Skipped already visited path: " << subPath << std::endl;
-                    continue;
-                }
-
-                visitedPaths.insert(subPath.string());
-
-                if (fs::is_directory(subPath)) {
-                    stack.push_back(subPath);
-                } else if (fs::is_regular_file(subPath)) {
-                    f_size += fs::file_size(subPath);
-                    std::cout << "File: " << subPath << ", Size: " << fs::file_size(subPath) << std::endl; // Debugging
-                }
+            // Only count regular files
+            if (fs::is_regular_file(path)) {
+                totalSize += fs::file_size(path);
             }
-        } catch (const fs::filesystem_error& e) {
-            std::cerr << "Filesystem error: " << e.what() << " for path: " << currentPath << std::endl;
         }
+    } catch (const fs::filesystem_error& e) {
+        std::cerr << "Error accessing AppData folder: " << e.what() << std::endl;
     }
 }
+
 
 //adapted from https://stackoverflow.com/questions/14539867/how-to-display-a-progress-indicator-in-pure-c-c-cout-printf
 //Displays progress bar based on the number of AppData folders deleted out of the total number detected; Displays a timer as well
