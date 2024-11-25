@@ -23,37 +23,10 @@ int64_t initialUserSpace;
 int64_t finalUserSpace; 
 double timeElapsed; //keeps amount of time elapsed in seconds
 
-int convertToMB = 20; //factor to convert initialUserSpace and finalUserSpace from bytes to MB
+int convertToMB = 1000000; //factor to convert initialUserSpace and finalUserSpace from bytes to MB
 int numUsersKept = 0; 
 int numUsersDeleted = 0; 
 int noAppData = 0; 
-
-// //Adapted from https://stackoverflow.co/question/15495756/how-can-i-find-the-size-of-all-files-located-inside-a-folder
-// //Function to calculate the size of a folder (including subfolders)
-// void getFolderSize(const std::string& users, unsigned long long& totalSize) {
-//     fs::path usersPath = fs::path(users);
-
-//     // Check if AppData exists and is a directory
-//     if (!fs::exists(usersPath) || !fs::is_directory(usersPath)) {
-//         std::cerr << "Users folder does not exist or is not accessible: " << usersPath << std::endl;
-//         return;
-//     }
-
-//     // Traverse the AppData directory
-//     try {
-//         for (const auto& entry : fs::recursive_directory_iterator(usersPath)) {
-//             const auto& path = entry.path();
-
-//             // Only count regular files (i.e. not folder or link files)
-//             if (fs::is_regular_file(path)) {
-//                 totalSize += fs::file_size(path);
-//             }
-//         }
-//     } catch (const fs::filesystem_error& e) {
-//         std::cerr << "Error accessing Users folder, unable to calculate storage usage: " << e.what() << std::endl;
-//     }
-// }
-
 
 //Adapted from: https://stackoverflow.com/questions/646241/c-run-a-system-command-and-get-output
 //              https://superuser.com/questions/837016/how-can-i-check-the-size-of-a-folder-from-the-windows-command-line
