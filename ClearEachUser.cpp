@@ -19,8 +19,7 @@ std::vector <std::string> deleteQueue = {}; //vector of the users' AppData folde
 std::string defaultUserPath = "C:/Users/"; 
 std::string directoryPath; //updates to the user's entered path in mainLoop
 
-unsigned long long initialUserSpace; //keeps the amount of space the user folder starts with (in MB)
-unsigned long long finalUserSpace;  //final space used by user folder after deletion
+int initialUserSpace; 
 double timeElapsed; //keeps amount of time elapsed in seconds
 
 int bytesToMB = 1000000.0; //factor to convert initialUserSpace and finalUserSpace from bytes to MB
@@ -28,31 +27,31 @@ int numUsersKept = 0;
 int numUsersDeleted = 0; 
 int noAppData = 0; 
 
-//Adapted from https://stackoverflow.co/question/15495756/how-can-i-find-the-size-of-all-files-located-inside-a-folder
-//Function to calculate the size of a folder (including subfolders)
-void getFolderSize(const std::string& users, unsigned long long& totalSize) {
-    fs::path usersPath = fs::path(users);
+// //Adapted from https://stackoverflow.co/question/15495756/how-can-i-find-the-size-of-all-files-located-inside-a-folder
+// //Function to calculate the size of a folder (including subfolders)
+// void getFolderSize(const std::string& users, unsigned long long& totalSize) {
+//     fs::path usersPath = fs::path(users);
 
-    // Check if AppData exists and is a directory
-    if (!fs::exists(usersPath) || !fs::is_directory(usersPath)) {
-        std::cerr << "Users folder does not exist or is not accessible: " << usersPath << std::endl;
-        return;
-    }
+//     // Check if AppData exists and is a directory
+//     if (!fs::exists(usersPath) || !fs::is_directory(usersPath)) {
+//         std::cerr << "Users folder does not exist or is not accessible: " << usersPath << std::endl;
+//         return;
+//     }
 
-    // Traverse the AppData directory
-    try {
-        for (const auto& entry : fs::recursive_directory_iterator(usersPath)) {
-            const auto& path = entry.path();
+//     // Traverse the AppData directory
+//     try {
+//         for (const auto& entry : fs::recursive_directory_iterator(usersPath)) {
+//             const auto& path = entry.path();
 
-            // Only count regular files (i.e. not folder or link files)
-            if (fs::is_regular_file(path)) {
-                totalSize += fs::file_size(path);
-            }
-        }
-    } catch (const fs::filesystem_error& e) {
-        std::cerr << "Error accessing Users folder, unable to calculate storage usage: " << e.what() << std::endl;
-    }
-}
+//             // Only count regular files (i.e. not folder or link files)
+//             if (fs::is_regular_file(path)) {
+//                 totalSize += fs::file_size(path);
+//             }
+//         }
+//     } catch (const fs::filesystem_error& e) {
+//         std::cerr << "Error accessing Users folder, unable to calculate storage usage: " << e.what() << std::endl;
+//     }
+// }
 
 
 //adapted from https://stackoverflow.com/questions/14539867/how-to-display-a-progress-indicator-in-pure-c-c-cout-printf
@@ -112,14 +111,11 @@ void deleteFolder(const fs::path& folderPath) {
     catch (const std::exception& e) {
         //std::cerr << "Failed to delete " << folderPath << ": " << e.what() << std::endl;
     }
-    std::thread finalSpaceT(getFolderSize, directoryPath, std::ref(finalUserSpace));
-    finalSpaceT.detach();
     
 }
 
 void removeAppData(fs::path& folderPath) {
     fs::path appDataPath = folderPath / "AppData";
-    getFolderSize(appDataPath.string(), std::ref(initialUserSpace)); 
     // Deletes AppData folder if one is found for that user; runs deleteFolder in new thread and detaches it for multi-threading
     if (fs::exists(appDataPath)) { 
         std::thread deleteThread(deleteFolder, appDataPath);
@@ -153,6 +149,9 @@ int mainLoop() {
     if (directoryPath == "default") {
         directoryPath = defaultUserPath; 
     }
+
+    std::string command = "powershell -command \"$totalsize=[long]0;gci -File -r -fo -ea Silent|%{$totalsize+=$_.Length};$totalsize\""; 
+    initialUserSpace = std::stoi(command)/bytesToMB; 
 
     try {
         // Iterate over the user directories
@@ -200,15 +199,12 @@ int main() {
     else {
         int initialDelQueue = deleteQueue.size(); 
         progressBar(deleteQueue.size());
+        std::string command = "powershell -command \"$totalsize=[long]0;gci -File -r -fo -ea Silent|%{$totalsize+=$_.Length};$totalsize\""; 
+        int finalUserSpace = std::stoi(command)/bytesToMB; 
         std::cout << std::endl; 
         std::cout << "Deleted " << initialDelQueue << " AppData folders in " << int(timeElapsed)/60 << "m " << int(timeElapsed)%60 << "s" << std::endl; 
         if (initialUserSpace > 0){
-            // Calculate the final space used by the user folder (after deletion)
-            getFolderSize(directoryPath, finalUserSpace);
-            //Convert inital and final space usage to MBs
-            initialUserSpace = initialUserSpace/bytesToMB; 
-            finalUserSpace = finalUserSpace/bytesToMB; 
-
+            
             double freedUserSpace = initialUserSpace - finalUserSpace;
             std::cout << "Space Freed from User Folder: " << freedUserSpace << " MB" << std::endl;
         }
