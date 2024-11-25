@@ -20,6 +20,7 @@ std::string defaultUserPath = "C:/Users/";
 std::string directoryPath; //updates to the user's entered path in mainLoop
 
 int initialUserSpace; 
+int finalUserSpace; 
 double timeElapsed; //keeps amount of time elapsed in seconds
 
 int bytesToMB = 1000000.0; //factor to convert initialUserSpace and finalUserSpace from bytes to MB
@@ -52,6 +53,18 @@ int noAppData = 0;
 //         std::cerr << "Error accessing Users folder, unable to calculate storage usage: " << e.what() << std::endl;
 //     }
 // }
+
+void getUsedSpace(int space){
+    FILE* fp = popen("powershell -command \"$totalsize=[long]0;gci -File -r -fo -ea Silent|%{$totalsize+=$_.Length};$totalsize\"", "r");
+    char path[50]; 
+    std::string readValue; 
+    while (fgets(path, 50, fp) != NULL){
+        readValue = path;
+    }
+    space = stoi(readValue)/bytesToMB; 
+    std::cout << space << std::endl; 
+    pclose(fp); 
+}
 
 
 //adapted from https://stackoverflow.com/questions/14539867/how-to-display-a-progress-indicator-in-pure-c-c-cout-printf
@@ -150,9 +163,7 @@ int mainLoop() {
         directoryPath = defaultUserPath; 
     }
 
-    std::string command = "powershell -command \"$totalsize=[long]0;gci -File -r -fo -ea Silent|%{$totalsize+=$_.Length};$totalsize\""; 
-    initialUserSpace = system(command.c_str())/bytesToMB; 
-    std::cout << initialUserSpace << std::endl; 
+    getUsedSpace(initialUserSpace); 
 
     try {
         // Iterate over the user directories
@@ -200,8 +211,7 @@ int main() {
     else {
         int initialDelQueue = deleteQueue.size(); 
         progressBar(deleteQueue.size());
-        std::string command = "powershell -command \"$totalsize=[long]0;gci -File -r -fo -ea Silent|%{$totalsize+=$_.Length};$totalsize\" > nul"; 
-        int finalUserSpace = system(command.c_str())/bytesToMB; 
+        getUsedSpace(finalUserSpace); 
         std::cout << std::endl; 
         std::cout << "Deleted " << initialDelQueue << " AppData folders in " << int(timeElapsed)/60 << "m " << int(timeElapsed)%60 << "s" << std::endl; 
         if (initialUserSpace > 0){
