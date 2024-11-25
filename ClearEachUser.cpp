@@ -58,7 +58,7 @@ int noAppData = 0;
 //Adapted from: https://stackoverflow.com/questions/646241/c-run-a-system-command-and-get-output
 //              https://superuser.com/questions/837016/how-can-i-check-the-size-of-a-folder-from-the-windows-command-line
 //Gets the current space available from the computer when ran; used for before and after comparisons of data
-void getUsedSpace(int space){
+void getUsedSpace(int64_t &space){
     FILE* fp = popen("powershell -command \"$totalsize=[long]0;gci -File -r -fo -ea Silent|%{$totalsize+=$_.Length};$totalsize\"", "r");
     char path[50]; 
     char *ptr; 
@@ -66,7 +66,7 @@ void getUsedSpace(int space){
     while (fgets(path, 50, fp) != NULL){
         readValue = path;
     }
-    space = stoll(readValue)/bytesToMB; 
+    space = stoll(readValue); 
     std::cout << space << std::endl; 
     pclose(fp); 
 }
