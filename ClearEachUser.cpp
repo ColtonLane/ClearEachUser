@@ -151,7 +151,7 @@ int mainLoop() {
     }
 
     std::string command = "powershell -command \"$totalsize=[long]0;gci -File -r -fo -ea Silent|%{$totalsize+=$_.Length};$totalsize\""; 
-    initialUserSpace = std::stoi(command)/bytesToMB; 
+    initialUserSpace = (std::stoi(command))/bytesToMB; 
 
     try {
         // Iterate over the user directories
@@ -204,7 +204,6 @@ int main() {
         std::cout << std::endl; 
         std::cout << "Deleted " << initialDelQueue << " AppData folders in " << int(timeElapsed)/60 << "m " << int(timeElapsed)%60 << "s" << std::endl; 
         if (initialUserSpace > 0){
-            
             double freedUserSpace = initialUserSpace - finalUserSpace;
             std::cout << "Space Freed from User Folder: " << freedUserSpace << " MB" << std::endl;
         }
