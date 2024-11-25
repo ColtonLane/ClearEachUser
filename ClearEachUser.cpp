@@ -141,7 +141,7 @@ int mainLoop() {
         directoryPath = defaultUserPath; 
     }
 
-    getUsedSpace(initialUserSpace); 
+    //getUsedSpace(initialUserSpace); 
 
     try {
         // Iterate over the user directories
@@ -189,13 +189,13 @@ int main() {
     else {
         int initialDelQueue = deleteQueue.size(); 
         progressBar(deleteQueue.size());
-        getUsedSpace(finalUserSpace); 
-        std::cout << std::endl; 
+        // getUsedSpace(finalUserSpace); 
+        // std::cout << std::endl; 
         std::cout << "Deleted " << initialDelQueue << " AppData folders in " << int(timeElapsed)/60 << "m " << int(timeElapsed)%60 << "s" << std::endl; 
-        if (initialUserSpace > 0){
-            double freedUserSpace = initialUserSpace - finalUserSpace;
-            std::cout << "Space Freed from User Folder: " << freedUserSpace << " MB" << std::endl;
-        }
+        // if (initialUserSpace > 0){
+        //     double freedUserSpace = initialUserSpace - finalUserSpace;
+        //     std::cout << "Space Freed from User Folder: " << freedUserSpace << " MB" << std::endl;
+        // }
     }
 
     std::cout << std::endl; 
