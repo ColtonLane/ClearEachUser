@@ -30,18 +30,18 @@ int noAppData = 0;
 
 //Adapted from https://stackoverflow.co/question/15495756/how-can-i-find-the-size-of-all-files-located-inside-a-folder
 //Function to calculate the size of a folder (including subfolders)
-void getFolderSize(const std::string& userPath, unsigned long long& totalSize) {
-    fs::path appDataPath = fs::path(userPath) / "AppData";
+void getFolderSize(const std::string& users, unsigned long long& totalSize) {
+    fs::path usersPath = fs::path(users);
 
     // Check if AppData exists and is a directory
-    if (!fs::exists(appDataPath) || !fs::is_directory(appDataPath)) {
-        // std::cerr << "AppData folder does not exist or is not accessible: " << appDataPath << std::endl;
+    if (!fs::exists(usersPath) || !fs::is_directory(usersPath)) {
+        // std::cerr << "AppData folder does not exist or is not accessible: " << usersPath << std::endl;
         return;
     }
 
     // Traverse the AppData directory
     try {
-        for (const auto& entry : fs::recursive_directory_iterator(appDataPath)) {
+        for (const auto& entry : fs::recursive_directory_iterator(usersPath)) {
             const auto& path = entry.path();
 
             // Only count regular files (i.e. not folder or link files)
