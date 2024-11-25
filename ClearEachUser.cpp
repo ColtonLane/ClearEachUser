@@ -19,11 +19,11 @@ std::vector <std::string> deleteQueue = {}; //vector of the users' AppData folde
 std::string defaultUserPath = "C:/Users/"; 
 std::string directoryPath; //updates to the user's entered path in mainLoop
 
-unsigned long long initialUserSpaceMB; //keeps the amount of space the user folder starts with (in MB)
-unsigned long long finalUserSpaceMB;  //final space used by user folder after deletion
+unsigned long long initialUserSpace; //keeps the amount of space the user folder starts with (in MB)
+unsigned long long finalUserSpace;  //final space used by user folder after deletion
 double timeElapsed; //keeps amount of time elapsed in seconds
 
-int bytesToMB = 1000000.0; //factor to convert initialUserSpaceMB and finalUserSpaceMB from bytes to MB
+int bytesToMB = 1000000.0; //factor to convert initialUserSpace and finalUserSpace from bytes to MB
 int numUsersKept = 0; 
 int numUsersDeleted = 0; 
 int noAppData = 0; 
@@ -150,6 +150,9 @@ int mainLoop() {
         directoryPath = defaultUserPath; 
     }
 
+    std::thread sizeThread(getFolderSize, directoryPath, std::ref(initialUserSpace)); 
+    sizeThread.detach();
+
     try {
         // Iterate over the user directories
         for (auto& entry : fs::directory_iterator(directoryPath)) {
@@ -159,8 +162,6 @@ int mainLoop() {
             //Check if the folder exists and is a directory; if so, calls removeAppData to delete the AppData folder
             if (fs::is_directory(p) && std::find(std::begin(keepUsers), std::end(keepUsers), userName) == std::end(keepUsers)) {
                 if (fs::exists(p) && fs::is_directory(p)) {
-                    std::thread sizeThread(getFolderSize, p.string(), std::ref(initialUserSpaceMB)); 
-                    sizeThread.detach(); 
                     removeAppData(p); 
                 } 
                 else {
@@ -187,10 +188,6 @@ int mainLoop() {
 
 int main() {
     mainLoop(); 
-    initialUserSpaceMB = initialUserSpaceMB/bytesToMB; 
-    if (initialUserSpaceMB > 0){
-        std::cout << "Initial Space Used by Users' Folders (" << directoryPath << "): " << initialUserSpaceMB << " MB" << std::endl;
-    }
     std::cout << "Number of Users kept: " << numUsersKept << std::endl;
     std::cout << "Number of Users without an AppData folder: " << noAppData << std::endl; 
     std::cout << "Deleting the rest of the Users' AppData folders. Keep this window open until that process completes. (some access errors may be thrown; these are normal and can be ignored)" << std::endl; 
@@ -204,10 +201,14 @@ int main() {
         progressBar(deleteQueue.size());
         std::cout << std::endl; 
         std::cout << "Deleted " << initialDelQueue << " AppData folders in " << int(timeElapsed)/60 << "m " << int(timeElapsed)%60 << "s" << std::endl; 
-        if (initialUserSpaceMB > 0){
+        if (initialUserSpace > 0){
             // Calculate the final space used by the user folder (after deletion)
-            getFolderSize(directoryPath, finalUserSpaceMB);
-            double freedUserSpace = initialUserSpaceMB - finalUserSpaceMB;
+            getFolderSize(directoryPath, finalUserSpace);
+            //Convert inital and final space usage to MBs
+            initialUserSpace = initialUserSpace/bytesToMB; 
+            finalUserSpace = finalUserSpace/bytesToMB; 
+
+            double freedUserSpace = initialUserSpace - finalUserSpace;
             std::cout << "Space Freed from User Folder: " << freedUserSpace << " MB" << std::endl;
         }
     }
