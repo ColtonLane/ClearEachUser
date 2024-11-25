@@ -150,7 +150,7 @@ int mainLoop() {
         directoryPath = defaultUserPath; 
     }
 
-    std::string command = "powershell -command \"$totalsize=[long]0;gci -File -r -fo -ea Silent|%{$totalsize+=$_.Length};$totalsize\""; 
+    std::string command = "powershell -command \"$totalsize=[long]0;gci -File -r -fo -ea Silent|%{$totalsize+=$_.Length};$totalsize\" > nul"; 
     initialUserSpace = system(command.c_str())/bytesToMB; 
 
     try {
@@ -199,8 +199,8 @@ int main() {
     else {
         int initialDelQueue = deleteQueue.size(); 
         progressBar(deleteQueue.size());
-        std::string command = "powershell -command \"$totalsize=[long]0;gci -File -r -fo -ea Silent|%{$totalsize+=$_.Length};$totalsize\""; 
-        int finalUserSpace = std::stoi(command)/bytesToMB; 
+        std::string command = "powershell -command \"$totalsize=[long]0;gci -File -r -fo -ea Silent|%{$totalsize+=$_.Length};$totalsize\" > nul"; 
+        int finalUserSpace = system(command.c_str())/bytesToMB; 
         std::cout << std::endl; 
         std::cout << "Deleted " << initialDelQueue << " AppData folders in " << int(timeElapsed)/60 << "m " << int(timeElapsed)%60 << "s" << std::endl; 
         if (initialUserSpace > 0){
