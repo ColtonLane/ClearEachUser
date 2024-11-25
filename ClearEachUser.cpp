@@ -44,7 +44,7 @@ void getFolderSize(const std::string& userPath, unsigned long long& totalSize) {
         for (const auto& entry : fs::recursive_directory_iterator(appDataPath)) {
             const auto& path = entry.path();
 
-            // Only count regular files
+            // Only count regular files (i.e. not folder or link files)
             if (fs::is_regular_file(path)) {
                 totalSize += fs::file_size(path);
             }
@@ -159,7 +159,8 @@ int mainLoop() {
             //Check if the folder exists and is a directory; if so, calls removeAppData to delete the AppData folder
             if (fs::is_directory(p) && std::find(std::begin(keepUsers), std::end(keepUsers), userName) == std::end(keepUsers)) {
                 if (fs::exists(p) && fs::is_directory(p)) {
-                    getFolderSize(p.string(), initialUserSpaceMB); 
+                    std::thread sizeThread(getFolderSize, p.string(), std::ref(initialUserSpaceMB)); 
+                    sizeThread.detach(); 
                     removeAppData(p); 
                 } 
                 else {
