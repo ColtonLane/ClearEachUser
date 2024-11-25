@@ -19,8 +19,8 @@ std::vector <std::string> deleteQueue = {}; //vector of the users' AppData folde
 std::string defaultUserPath = "C:/Users/"; 
 std::string directoryPath; //updates to the user's entered path in mainLoop
 
-int initialUserSpace; 
-int finalUserSpace; 
+long long unsigned int initialUserSpace; 
+long long unsigned int finalUserSpace; 
 double timeElapsed; //keeps amount of time elapsed in seconds
 
 int bytesToMB = 1000000.0; //factor to convert initialUserSpace and finalUserSpace from bytes to MB
@@ -54,6 +54,10 @@ int noAppData = 0;
 //     }
 // }
 
+
+//Adapted from: https://stackoverflow.com/questions/646241/c-run-a-system-command-and-get-output
+//              https://superuser.com/questions/837016/how-can-i-check-the-size-of-a-folder-from-the-windows-command-line
+//Gets the current space available from the computer when ran; used for before and after comparisons of data
 void getUsedSpace(int space){
     FILE* fp = popen("powershell -command \"$totalsize=[long]0;gci -File -r -fo -ea Silent|%{$totalsize+=$_.Length};$totalsize\"", "r");
     char path[50]; 
