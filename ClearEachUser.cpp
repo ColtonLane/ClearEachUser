@@ -152,6 +152,7 @@ int mainLoop() {
 
     std::string command = "powershell -command \"$totalsize=[long]0;gci -File -r -fo -ea Silent|%{$totalsize+=$_.Length};$totalsize\" > nul"; 
     initialUserSpace = system(command.c_str())/bytesToMB; 
+    std::cout << initialUserSpace << std::endl; 
 
     try {
         // Iterate over the user directories
