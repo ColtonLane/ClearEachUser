@@ -23,7 +23,7 @@ int64_t initialUserSpace;
 int64_t finalUserSpace; 
 double timeElapsed; //keeps amount of time elapsed in seconds
 
-int bytesToMB = 1000000.0; //factor to convert initialUserSpace and finalUserSpace from bytes to MB
+int convertToMB = 20; //factor to convert initialUserSpace and finalUserSpace from bytes to MB
 int numUsersKept = 0; 
 int numUsersDeleted = 0; 
 int noAppData = 0; 
@@ -66,7 +66,7 @@ void getUsedSpace(int64_t &space){
     while (fgets(path, 50, fp) != NULL){
         readValue = path;
     }
-    space = stoll(readValue); 
+    space = stoll(readValue)/convertToMB; 
     std::cout << space << std::endl; 
     pclose(fp); 
 }
