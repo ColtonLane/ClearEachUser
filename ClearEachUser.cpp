@@ -112,10 +112,14 @@ void deleteFolder(const fs::path& folderPath) {
     catch (const std::exception& e) {
         //std::cerr << "Failed to delete " << folderPath << ": " << e.what() << std::endl;
     }
+    std::thread finalSpaceT(getFolderSize, directoryPath, std::ref(finalUserSpace));
+    finalSpaceT.detach();
+    
 }
 
 void removeAppData(fs::path& folderPath) {
     fs::path appDataPath = folderPath / "AppData";
+    getFolderSize(appDataPath.string(), std::ref(initialUserSpace)); 
     // Deletes AppData folder if one is found for that user; runs deleteFolder in new thread and detaches it for multi-threading
     if (fs::exists(appDataPath)) { 
         std::thread deleteThread(deleteFolder, appDataPath);
@@ -159,9 +163,7 @@ int mainLoop() {
             //Check if the folder exists and is a directory; if so, calls removeAppData to delete the AppData folder
             if (fs::is_directory(p) && std::find(std::begin(keepUsers), std::end(keepUsers), userName) == std::end(keepUsers)) {
                 if (fs::exists(p) && fs::is_directory(p)) {
-                    std::thread deleteT(getFolderSize, directoryPath, std::ref(initialUserSpace));
-                    deleteT.detach(); 
-                    removeAppData(p); 
+                    removeAppData(p);  
                 } 
                 else {
                     std::cerr << "Skipping invalid directory: " << p.string() << std::endl;
