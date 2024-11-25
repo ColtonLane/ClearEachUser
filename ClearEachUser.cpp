@@ -150,8 +150,7 @@ int mainLoop() {
         directoryPath = defaultUserPath; 
     }
 
-    std::thread sizeThread(getFolderSize, directoryPath, std::ref(initialUserSpace)); 
-    sizeThread.detach();
+    getFolderSize(directoryPath, initialUserSpace); 
 
     try {
         // Iterate over the user directories
