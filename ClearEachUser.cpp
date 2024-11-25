@@ -35,7 +35,7 @@ void getFolderSize(const std::string& users, unsigned long long& totalSize) {
 
     // Check if AppData exists and is a directory
     if (!fs::exists(usersPath) || !fs::is_directory(usersPath)) {
-        // std::cerr << "AppData folder does not exist or is not accessible: " << usersPath << std::endl;
+        std::cerr << "Users folder does not exist or is not accessible: " << usersPath << std::endl;
         return;
     }
 
@@ -50,7 +50,7 @@ void getFolderSize(const std::string& users, unsigned long long& totalSize) {
             }
         }
     } catch (const fs::filesystem_error& e) {
-        //std::cerr << "Error accessing AppData folder: " << e.what() << std::endl;
+        std::cerr << "Error accessing Users folder, unable to calculate storage usage: " << e.what() << std::endl;
     }
 }
 
