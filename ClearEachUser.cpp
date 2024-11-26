@@ -29,23 +29,6 @@ int numUsersKept = 0;
 int numUsersDeleted = 0; 
 int noAppData = 0; 
 
-//Adapted from: https://stackoverflow.com/questions/646241/c-run-a-system-command-and-get-output
-//              https://superuser.com/questions/837016/how-can-i-check-the-size-of-a-folder-from-the-windows-command-line
-//Gets the current space available from the computer when ran; used for before and after comparisons of data
-void getUsedSpace(int64_t &space){
-    FILE* fp = popen("powershell -command \"$totalsize=[long]0;gci -File -r -fo -ea Silent|%{$totalsize+=$_.Length};$totalsize\"", "r");
-    char path[50]; 
-    char *ptr; 
-    std::string readValue; 
-    while (fgets(path, 50, fp) != NULL){
-        readValue = path;
-    }
-    space = stoll(readValue)/convertToMB; 
-    std::cout << space << std::endl; 
-    pclose(fp); 
-}
-
-
 //adapted from https://stackoverflow.com/questions/14539867/how-to-display-a-progress-indicator-in-pure-c-c-cout-printf
 //Displays progress bar based on the number of AppData folders deleted out of the total number detected; Displays a timer as well
 void progressBar(const int initialTotal) { 
@@ -142,10 +125,6 @@ int mainLoop() {
         directoryPath = defaultUserPath; 
     }
 
-    //getUsedSpace(initialUserSpace); 
-    si = fs::space(fs::path(directoryPath).parent_path()); 
-    initialUserSpace = si.available;  
-
     try {
         // Iterate over the user directories
         for (auto& entry : fs::directory_iterator(directoryPath)) {
@@ -194,12 +173,12 @@ int main() {
         progressBar(deleteQueue.size());
         // getUsedSpace(finalUserSpace); 
         // std::cout << std::endl; 
-        finalUserSpace = si.available; 
+        // finalUserSpace = si.available; 
         std::cout << "Deleted " << initialDelQueue << " AppData folders in " << int(timeElapsed)/60 << "m " << int(timeElapsed)%60 << "s" << std::endl; 
-        if (initialUserSpace > 0){
-            auto freedUserSpace = (initialUserSpace - finalUserSpace) / 1000;
-            std::cout << "Space Freed from User Folder: " << freedUserSpace << " MB" << std::endl;
-        }
+        // if (initialUserSpace > 0){
+        //     auto freedUserSpace = (initialUserSpace - finalUserSpace) / 1000;
+        //     std::cout << "Space Freed from User Folder: " << freedUserSpace << " MB" << std::endl;
+        // }
     }
 
     std::cout << std::endl; 
