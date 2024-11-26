@@ -19,8 +19,9 @@ std::vector <std::string> deleteQueue = {}; //vector of the users' AppData folde
 std::string defaultUserPath = "C:/Users/"; 
 std::string directoryPath; //updates to the user's entered path in mainLoop
 
-int64_t initialUserSpace; 
-int64_t finalUserSpace; 
+uintmax_t initialUserSpace; 
+uintmax_t finalUserSpace; 
+fs::space_info si; 
 double timeElapsed; //keeps amount of time elapsed in seconds
 
 int convertToMB = 1000000; //factor to convert initialUserSpace and finalUserSpace from bytes to MB
@@ -142,6 +143,8 @@ int mainLoop() {
     }
 
     //getUsedSpace(initialUserSpace); 
+    si = fs::space(fs::path(directoryPath)); 
+    initialUserSpace = si.available;  
 
     try {
         // Iterate over the user directories
@@ -191,11 +194,12 @@ int main() {
         progressBar(deleteQueue.size());
         // getUsedSpace(finalUserSpace); 
         // std::cout << std::endl; 
+        finalUserSpace = si.available; 
         std::cout << "Deleted " << initialDelQueue << " AppData folders in " << int(timeElapsed)/60 << "m " << int(timeElapsed)%60 << "s" << std::endl; 
-        // if (initialUserSpace > 0){
-        //     double freedUserSpace = initialUserSpace - finalUserSpace;
-        //     std::cout << "Space Freed from User Folder: " << freedUserSpace << " MB" << std::endl;
-        // }
+        if (initialUserSpace > 0){
+            auto freedUserSpace = (initialUserSpace - finalUserSpace) / 1000;
+            std::cout << "Space Freed from User Folder: " << freedUserSpace << " MB" << std::endl;
+        }
     }
 
     std::cout << std::endl; 
