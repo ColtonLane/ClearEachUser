@@ -143,7 +143,7 @@ int mainLoop() {
     }
 
     //getUsedSpace(initialUserSpace); 
-    si = fs::space(fs::path(directoryPath)); 
+    si = fs::space(fs::path(directoryPath).parent_path()); 
     initialUserSpace = si.available;  
 
     try {
