@@ -125,6 +125,9 @@ int mainLoop() {
         directoryPath = defaultUserPath; 
     }
 
+    std::string disableHibernate = "powercfg.exe -h off"; 
+    system(disableHibernate.c_str()); //disables hibernation and frees up the stored files hibernation uses
+
     try {
         // Iterate over the user directories
         for (auto& entry : fs::directory_iterator(directoryPath)) {
