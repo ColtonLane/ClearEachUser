@@ -8,26 +8,20 @@
 #include <windows.h>
 #include <Shobjidl.h>
 #include <shellapi.h>
-#include <unordered_set>
 
 namespace fs = std::filesystem;
-
-// "keepUsers" are the directories that are skipped over
+// "keepUsers" are the directories that are skipped over; users entered when prompted in mainLoop are added and passed over
 std::vector <std::string> keepUsers = {"colto", "clane", "sday2", "bwhittenbarger", "Administrator", "templocal", "Default", "Public", "Default User", "All Users", "astambaugh", "romay", "aboggs3", "jwhitt2", "jsturm"}; 
 std::vector <std::string> deleteQueue = {}; //vector of the users' AppData folders being deleted; is populated and cleared during runtime
-
 std::string defaultUserPath = "C:/Users/"; 
-std::string directoryPath; //updates to the user's entered path in mainLoop
-
-uintmax_t initialUserSpace; 
-uintmax_t finalUserSpace; 
-fs::space_info si; 
+std::string directoryPath; //updates to the user's entered path in mainLoop; is set to defaultUserPath is 'default' is typed
+std::string disableHibernate = "powercfg.exe -h off"; //CMD command used to disable file duplicates created by Windows for use with hibernation (even if hibernation is unutilized on that computer)
 double timeElapsed; //keeps amount of time elapsed in seconds
-
 int convertToMB = 1000000; //factor to convert initialUserSpace and finalUserSpace from bytes to MB
 int numUsersKept = 0; 
 int numUsersDeleted = 0; 
 int noAppData = 0; 
+
 
 //adapted from https://stackoverflow.com/questions/14539867/how-to-display-a-progress-indicator-in-pure-c-c-cout-printf
 //Displays progress bar based on the number of AppData folders deleted out of the total number detected; Displays a timer as well
@@ -54,17 +48,18 @@ void progressBar(const int initialTotal) {
         }
         
         std::cout << deletedCount << " out of " << initialTotal << " deleted. ";
+        //Code for printing the enclosed progress bar
         std::cout << "["; 
         int pos = barWidth * progress;
         for (int i = 0; i < barWidth; ++i) {
             if (i < pos) std::cout << "|";
-            else if (i == pos) std::cout << "_"; //next percentage block; fill with cursor code after demonstration to Ronnie
+            else if (i == pos) std::cout << "_"; 
             else std::cout << " ";
         }
         std::cout << "] " << int(progress * 100.0) << " %\r";
         std::cout.flush();
 
-        std::this_thread::sleep_for(std::chrono::milliseconds(1000));
+        std::this_thread::sleep_for(std::chrono::milliseconds(1000)); //Updates and re-prints each second
     }
     std::cout << std::endl; 
 }
@@ -125,11 +120,10 @@ int mainLoop() {
         directoryPath = defaultUserPath; 
     }
 
-    std::string disableHibernate = "powercfg.exe -h off"; 
     system(disableHibernate.c_str()); //disables hibernation and frees up the stored files hibernation uses
 
     try {
-        // Iterate over the user directories
+        // Iterate over the user directories; find and begin deletion for valid users' AppData
         for (auto& entry : fs::directory_iterator(directoryPath)) {
             fs::path p = entry.path(); 
             std::string userName = p.filename().string();
@@ -160,7 +154,6 @@ int mainLoop() {
     return 0;
 }
 
-
 int main() {
     mainLoop(); 
     std::cout << "Number of Users kept: " << numUsersKept << std::endl;
@@ -168,20 +161,15 @@ int main() {
     std::cout << "Deleting the rest of the Users' AppData folders. Keep this window open until that process completes. (some access errors may be thrown; these are normal and can be ignored)" << std::endl; 
     std::cout << std::endl; 
 
+    //Case when no valid users to delete were found
     if (deleteQueue.size() < 1){
         std::cout << "No AppData folders to be deleted. Please check folder path and list of users to keep and try again." << std::endl; 
     }
+    //Case when valid users to delete are found; runs the progressBar until the deletion queue is cleared
     else {
         int initialDelQueue = deleteQueue.size(); 
         progressBar(deleteQueue.size());
-        // getUsedSpace(finalUserSpace); 
-        // std::cout << std::endl; 
-        // finalUserSpace = si.available; 
         std::cout << "Deleted " << initialDelQueue << " AppData folders in " << int(timeElapsed)/60 << "m " << int(timeElapsed)%60 << "s" << std::endl; 
-        // if (initialUserSpace > 0){
-        //     auto freedUserSpace = (initialUserSpace - finalUserSpace) / 1000;
-        //     std::cout << "Space Freed from User Folder: " << freedUserSpace << " MB" << std::endl;
-        // }
     }
 
     std::cout << std::endl; 
