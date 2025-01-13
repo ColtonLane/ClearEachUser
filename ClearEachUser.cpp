@@ -11,7 +11,7 @@
 
 namespace fs = std::filesystem;
 // "keepUsers" are the directories that are skipped over; users entered when prompted in mainLoop are added and passed over
-std::vector <std::string> keepUsers = {"colto", "clane", "sday2", "bwhittenbarger", "Administrator", "templocal", "Default", "Public", "Default User", "All Users", "astambaugh", "romay", "aboggs3", "jwhitt2", "jsturm"}; 
+std::vector <std::string> keepUsers = {"Administrator", "templocal", "Default", "Public", "Default User", "All Users"}; 
 std::vector <std::string> deleteQueue = {}; //vector of the users' AppData folders being deleted; is populated and cleared during runtime
 std::string defaultUserPath = "C:/Users/"; 
 std::string directoryPath; //updates to the user's entered path in mainLoop; is set to defaultUserPath is 'default' is typed
